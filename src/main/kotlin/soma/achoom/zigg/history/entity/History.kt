@@ -7,7 +7,7 @@ import soma.achoom.zigg.feedback.entity.Feedback
 import java.util.UUID
 
 @Entity
-data class History(
+class History(
     @Id
     var historyId: UUID = UUID.randomUUID(),
 
@@ -20,7 +20,7 @@ data class History(
     @JsonBackReference
     var space: soma.achoom.zigg.space.entity.Space,
 
-    var historyVideoThumbnailUrl: String,
+    var historyVideoThumbnailKey: String,
 
     var videoDuration: String? = null,
     @OneToMany(mappedBy = "history", cascade = [CascadeType.ALL], orphanRemoval = true)
@@ -32,13 +32,13 @@ data class History(
 
 ) : BaseEntity() {
 
-    override fun hashCode(): Int {
-        return historyId.hashCode()
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is History) return false
-        return historyId == other.historyId && historyName == other.historyName && space == other.space && feedbacks == other.feedbacks && isDeleted == other.isDeleted
-    }
+//    override fun hashCode(): Int {
+//        return historyId.hashCode()
+//    }
+//
+//    override fun equals(other: Any?): Boolean {
+//        if (this === other) return true
+//        if (other !is History) return false
+//        return historyId == other.historyId && historyName == other.historyName && space == other.space && feedbacks == other.feedbacks && isDeleted == other.isDeleted
+//    }
 }

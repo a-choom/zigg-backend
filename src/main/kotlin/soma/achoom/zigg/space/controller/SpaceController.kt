@@ -69,4 +69,15 @@ class SpaceController @Autowired constructor(
         val spaceResponseDto = spaceService.addReferenceUrl(authentication, spaceId, spaceReferenceUrlRequestDto)
         return ResponseEntity.ok(spaceResponseDto)
     }
+    @DeleteMapping("/reference/{spaceId}")
+    fun deleteReferenceUrl(authentication:Authentication, @PathVariable spaceId:UUID) : ResponseEntity<SpaceResponseDto> {
+        val spaceResponseDto = spaceService.deleteReferenceUrl(authentication, spaceId)
+        return ResponseEntity.ok(spaceResponseDto)
+    }
+
+    @DeleteMapping("withdraw/{spaceId}")
+    fun withdrawSpace(authentication:Authentication, @PathVariable spaceId:UUID) : ResponseEntity<Void> {
+        spaceService.withdrawSpace(authentication, spaceId)
+        return ResponseEntity.ok().build()
+    }
 }

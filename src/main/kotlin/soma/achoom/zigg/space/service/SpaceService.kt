@@ -19,6 +19,7 @@ import soma.achoom.zigg.space.repository.SpaceRepository
 import soma.achoom.zigg.space.exception.LowSpacePermissionException
 import soma.achoom.zigg.space.exception.SpaceUserNotFoundInSpaceException
 import soma.achoom.zigg.user.entity.User
+import soma.achoom.zigg.user.repository.UserRepository
 import soma.achoom.zigg.user.service.UserService
 import java.util.UUID
 
@@ -28,10 +29,34 @@ class SpaceService(
     private val spaceRepository: SpaceRepository,
     private val userService: UserService,
     private val responseDtoManager: ResponseDtoManager,
-    private val fcmService: FCMService
+    private val fcmService: FCMService,
+    private val userRepository: UserRepository
 ) {
     @Value("\${space.default.image.url}")
     private lateinit var defaultSpaceImageUrl: String
+
+
+    @Transactional(readOnly = false)
+    fun withdrawSpace(authentication: Authentication, spaceId: UUID) {
+        val user = userService.authenticationToUser(authentication)
+
+        val space = spaceRepository.findSpaceBySpaceId(spaceId)
+            ?: throw SpaceNotFoundException()
+
+        validateSpaceUser(user, space)
+
+
+        user.spaces.removeIf {
+            it.space == space
+        }
+        space.spaceUsers.find { it.user == user }?.apply {
+            this.user = null
+            this.userNickname = "알 수 없음"
+            this.userName = "알 수 없음"
+        }
+        spaceRepository.save(space)
+        userRepository.save(user)
+    }
 
     @Transactional(readOnly = false)
     fun inviteUserToSpace(
@@ -219,5 +244,21 @@ class SpaceService(
             return it
         }
         throw SpaceUserNotFoundInSpaceException()
+    }
+
+    @Transactional(readOnly = false)
+    fun deleteReferenceUrl(authentication: Authentication, spaceId: UUID): SpaceResponseDto {
+        val user = userService.authenticationToUser(authentication)
+
+        val space = spaceRepository.findSpaceBySpaceId(spaceId)
+            ?: throw SpaceNotFoundException()
+
+        validateSpaceUser(user, space)
+        space.referenceVideoUrl = null
+
+        spaceRepository.save(space)
+
+        return responseDtoManager.generateSpaceResponseShortDto(space)
+
     }
 }

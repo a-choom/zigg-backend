@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import soma.achoom.zigg.feedback.dto.FeedbackRequestDto
 import soma.achoom.zigg.feedback.dto.FeedbackResponseDto
+import soma.achoom.zigg.feedback.entity.Feedback
 
-import soma.achoom.zigg.feedback.entity.FeedbackRecipient
 import soma.achoom.zigg.feedback.exception.FeedbackNotFoundException
 import soma.achoom.zigg.feedback.repository.FeedbackRepository
 import soma.achoom.zigg.global.ResponseDtoManager
@@ -45,7 +45,7 @@ class FeedbackService @Autowired constructor(
         val history = historyRepository.findHistoryByHistoryId(historyId) ?: throw HistoryNotFoundException()
         val feedbacks = history.feedbacks.toMutableSet()
 
-        return feedbacks.filter { !it.isDeleted }.map {
+        return feedbacks.map {
             responseDtoManager.generateFeedbackResponseDto(it)
         }.toList()
     }
@@ -65,7 +65,14 @@ class FeedbackService @Autowired constructor(
             spaceUserRepository.findSpaceUserBySpaceUserId(it) ?: throw SpaceUserNotFoundInSpaceException()
         }.toMutableSet()
 
-        val feedback = feedbackRequestDto.toFeedBack(history, spaceUser, feedbackRecipient)
+        val feedback = Feedback(
+            feedbackId = UUID.randomUUID(),
+            feedbackTimeline = feedbackRequestDto.feedbackTimeline,
+            feedbackMessage = feedbackRequestDto.feedbackMessage,
+            history = history,
+            feedbackCreator = spaceUser,
+            recipients = feedbackRecipient
+        )
         feedbackRepository.save(feedback)
         return responseDtoManager.generateFeedbackResponseDto(feedback)
     }
@@ -89,10 +96,7 @@ class FeedbackService @Autowired constructor(
             feedbackRequestDto.recipientId.map {
                 val spaceUser =
                     spaceUserRepository.findSpaceUserBySpaceUserId(it) ?: throw SpaceUserNotFoundInSpaceException()
-                FeedbackRecipient(
-                    feedback = feedback,
-                    recipient = spaceUser
-                )
+                spaceUser
             }
         )
         feedback.feedbackTimeline = feedbackRequestDto.feedbackTimeline
@@ -111,12 +115,10 @@ class FeedbackService @Autowired constructor(
 
         spaceService.validateSpaceUser(user, space)
 
-
         historyRepository.findHistoryByHistoryId(historyId) ?: throw HistoryNotFoundException()
         val feedback = feedbackRepository.findFeedbackByFeedbackId(feedbackId) ?: throw FeedbackNotFoundException()
 
-        feedback.isDeleted = true
-        feedbackRepository.save(feedback)
+        feedbackRepository.delete(feedback)
     }
     @Transactional(readOnly = true)
     fun getFeedback(

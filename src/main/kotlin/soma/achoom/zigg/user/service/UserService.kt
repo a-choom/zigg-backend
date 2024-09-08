@@ -25,9 +25,8 @@ class UserService(
     private val spaceUserRepository: SpaceUserRepository
 ) {
     @Transactional(readOnly = true)
-    fun searchUser(authentication: Authentication, nickname: String): MutableSet<UserResponseDto> {
-        val users = userRepository.findUsersByUserNicknameLike(nickname,PageRequest.of(0,5))
-
+    fun searchUser(authentication: Authentication, name: String): MutableSet<UserResponseDto> {
+        val users = userRepository.findUsersByUserNameLike(name,PageRequest.of(0,10))
         return users
             .filter { it.userNickname != authenticationToUser(authentication).userNickname }.map {
             responseDtoManager.generateUserResponseDto(it)

@@ -125,6 +125,16 @@ class SpaceServiceTest {
         assert(updateResponse.spaceName == updateSpaceRequestDto.spaceName)
         println(updateResponse.toString())
     }
+
+    @Test
+    fun `withdraw space Test`(){
+        val space = dummyDataUtil.createDummySpace()
+        val spaceUser = dummyDataUtil.createDummySpaceUser(space,admin)
+
+        spaceService.withdrawSpace(dummyDataUtil.createDummyAuthentication(admin),space.spaceId)
+        assert(space.spaceUsers.first().userNickname == "알 수 없음")
+        assert(admin.spaces.size == 0)
+    }
     @Test
     fun `delete Space Test`() {
         // given

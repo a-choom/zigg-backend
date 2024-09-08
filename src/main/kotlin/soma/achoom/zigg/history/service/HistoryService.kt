@@ -50,7 +50,7 @@ class HistoryService @Autowired constructor(
             historyName = historyRequestDto.historyName,
             space = space,
             videoDuration = historyRequestDto.videoDuration,
-            historyVideoThumbnailUrl = historyRequestDto.historyThumbnailUrl.split("?")[0].split("/").subList(3, historyRequestDto.historyThumbnailUrl.split("?")[0].split("/").size).joinToString("/")
+            historyVideoThumbnailKey = historyRequestDto.historyThumbnailUrl.split("?")[0].split("/").subList(3, historyRequestDto.historyThumbnailUrl.split("?")[0].split("/").size).joinToString("/")
         )
 
         historyRepository.save(history)
@@ -76,6 +76,9 @@ class HistoryService @Autowired constructor(
             ?: throw SpaceNotFoundException()
         return responseDtoManager.generateHistoryResponseDto(history)
     }
+
+
+
     @Transactional(readOnly = false)
     fun updateHistory(
         authentication: Authentication,

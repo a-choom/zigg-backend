@@ -54,7 +54,7 @@ class ResponseDtoManager(
             historyId = history.historyId,
             historyName = history.historyName,
             historyVideoPreSignedUrl = s3Service.getPreSignedGetUrl(history.historyVideoKey),
-            historyVideoThumbnailPreSignedUrl = s3Service.getPreSignedGetUrl(history.historyVideoThumbnailUrl),
+            historyVideoThumbnailPreSignedUrl = s3Service.getPreSignedGetUrl(history.historyVideoThumbnailKey),
             createdAt = history.createAt,
             feedbacks = null,
             videoDuration = history.videoDuration,
@@ -66,7 +66,7 @@ class ResponseDtoManager(
             historyId = history.historyId,
             historyName = history.historyName,
             historyVideoPreSignedUrl = s3Service.getPreSignedGetUrl(history.historyVideoKey),
-            historyVideoThumbnailPreSignedUrl = s3Service.getPreSignedGetUrl(history.historyVideoThumbnailUrl),
+            historyVideoThumbnailPreSignedUrl = s3Service.getPreSignedGetUrl(history.historyVideoThumbnailKey),
             createdAt = history.createAt,
             feedbacks = history.feedbacks.map { generateFeedbackResponseDto(it) }.toMutableSet(),
             videoDuration = history.videoDuration,
@@ -80,7 +80,7 @@ class ResponseDtoManager(
             feedbackType = feedback.feedbackType,
             feedbackMessage = feedback.feedbackMessage,
             creatorId = generateSpaceUserResponseDto(feedback.feedbackCreator),
-            recipientId = feedback.recipients.map { generateSpaceUserResponseDto(it.recipient) }.toMutableSet()
+            recipientId = feedback.recipients.map { generateSpaceUserResponseDto(it) }.toMutableSet()
         )
     }
     fun generateSpaceUserResponseDto(spaceUser: SpaceUser): SpaceUserResponseDto {
