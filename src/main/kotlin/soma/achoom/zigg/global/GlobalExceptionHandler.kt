@@ -20,6 +20,7 @@ import soma.achoom.zigg.user.exception.UserNotFoundException
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
+
     @ExceptionHandler(UserNotFoundException::class)
     fun handleUserNotFound(e: UserNotFoundException): ResponseEntity<Any> {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.message)
