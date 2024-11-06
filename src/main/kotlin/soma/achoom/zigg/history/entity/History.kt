@@ -15,11 +15,9 @@ class History(
     var historyId: Long? = null,
     @Column(name = "history_name")
     var name: String?,
-    @OneToOne(cascade = [CascadeType.PERSIST])
-    @PrimaryKeyJoinColumn(name = "video_key")
+    @OneToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var videoKey: Video,
-    @OneToOne(cascade = [CascadeType.PERSIST])
-    @PrimaryKeyJoinColumn(name = "video_thumbnail_image_key")
+    @OneToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var videoThumbnailUrl: Image,
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var feedbacks: MutableSet<Feedback> = mutableSetOf(),

@@ -50,7 +50,6 @@ class PostController(
         val post = postService.getPost(authentication,boardId,postId)
         return ResponseEntity.ok(post)
     }
-
     @PatchMapping("/{boardId}/{postId}")
     fun updatePost(authentication: Authentication, @PathVariable boardId : Long,@PathVariable postId: Long, @RequestBody postRequestDto: PostRequestDto) : ResponseEntity<PostResponseDto>{
         val post = postService.updatePost(authentication, postId, postRequestDto)

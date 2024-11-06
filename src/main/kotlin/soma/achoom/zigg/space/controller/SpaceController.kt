@@ -1,10 +1,8 @@
 package soma.achoom.zigg.space.controller
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
-import soma.achoom.zigg.global.ResponseDtoManager
 import soma.achoom.zigg.history.dto.UploadContentTypeRequestDto
 import soma.achoom.zigg.s3.service.S3DataType
 import soma.achoom.zigg.s3.service.S3Service
@@ -17,7 +15,7 @@ import java.util.*
 
 @RestController
 @RequestMapping("/api/v0/spaces")
-class SpaceController @Autowired constructor(
+class SpaceController(
     private val spaceService: SpaceService,
     private val s3Service: S3Service,
 ) {
@@ -26,13 +24,11 @@ class SpaceController @Autowired constructor(
         val preSignUrl = s3Service.getPreSignedPutUrl(S3DataType.SPACE_IMAGE,UUID.randomUUID(),uploadContentTypeRequestDto)
         return ResponseEntity.ok(preSignUrl)
     }
-
     @GetMapping
     fun getSpaces(authentication:Authentication) : ResponseEntity<List<SpaceResponseDto>> {
         val spaces = spaceService.getSpaces(authentication)
         return ResponseEntity.ok(spaces)
     }
-
     @PostMapping
     fun createSpace(
         authentication:Authentication,
@@ -41,7 +37,6 @@ class SpaceController @Autowired constructor(
         val space = spaceService.createSpace(authentication, spaceRequestDto)
         return ResponseEntity.ok(space)
     }
-
     @GetMapping("/{spaceId}")
     fun getSpace(authentication:Authentication, @PathVariable spaceId:Long) : ResponseEntity<SpaceResponseDto> {
         val space = spaceService.getSpace(authentication, spaceId)

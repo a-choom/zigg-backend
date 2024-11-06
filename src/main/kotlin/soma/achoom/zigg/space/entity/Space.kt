@@ -16,7 +16,7 @@ class Space(
 
     var name: String,
 
-    @ManyToOne(cascade = [CascadeType.PERSIST])
+    @ManyToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var imageKey: Image,
     @Column(name = "reference_video_key")
     var referenceVideoKey: String? = null,
