@@ -324,7 +324,6 @@ class SpaceService(
 
         validateSpaceUser(user, space)
         spaceUserRepository.deleteAllBySpace(space)
-        // Delete the space
         spaceRepository.delete(space)
     }
 
@@ -333,12 +332,9 @@ class SpaceService(
         authentication: Authentication, spaceId: Long, spaceReferenceUrlRequestDto: SpaceReferenceUrlRequestDto
     ): SpaceResponseDto {
         val user = userService.authenticationToUser(authentication)
-
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
-
         validateSpaceUser(user, space)
         space.referenceVideoKey = spaceReferenceUrlRequestDto.referenceUrl
-
         spaceRepository.save(space)
 
         return SpaceResponseDto(
@@ -364,13 +360,11 @@ class SpaceService(
     @Transactional(readOnly = false)
     fun deleteReferenceUrl(authentication: Authentication, spaceId: Long): SpaceResponseDto {
         val user = userService.authenticationToUser(authentication)
-
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
-
         validateSpaceUser(user, space)
         space.referenceVideoKey = null
-
         spaceRepository.save(space)
+
         return SpaceResponseDto(
             spaceId = space.spaceId,
             spaceName = space.name,
