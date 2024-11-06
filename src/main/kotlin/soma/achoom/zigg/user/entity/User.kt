@@ -36,10 +36,10 @@ class User(
     @Column(name = "user_role")
     var role: UserRole = UserRole.USER,
 
-    @ManyToOne(cascade = [CascadeType.PERSIST])
+    @ManyToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var profileImageKey: Image,
 
-    @ManyToOne(cascade = [CascadeType.PERSIST])
+    @ManyToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var profileBannerImageKey : Image? = null,
 
     @Enumerated(EnumType.STRING)
