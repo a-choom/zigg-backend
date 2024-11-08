@@ -42,13 +42,13 @@ class InviteService(
                     userId = it.inviter.userId,
                     userName = it.inviter.name,
                     userNickname = it.inviter.nickname,
-                    profileImageUrl = it.inviter.profileImageKey.imageKey,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(it.inviter.profileImageKey.imageKey,)
                 ),
                 invitedUser = UserResponseDto(
                     userId = it.invitee.userId,
                     userName = it.invitee.name,
                     userNickname = it.invitee.nickname,
-                    profileImageUrl = it.invitee.profileImageKey.imageKey,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(it.invitee.profileImageKey.imageKey),
                 ),
                 space = SpaceResponseDto(
                     spaceId = it.space.spaceId,
