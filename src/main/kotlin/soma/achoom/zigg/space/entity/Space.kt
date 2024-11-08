@@ -5,7 +5,6 @@ import soma.achoom.zigg.content.entity.Image
 import soma.achoom.zigg.global.BaseEntity
 
 import soma.achoom.zigg.history.entity.History
-import soma.achoom.zigg.invite.entity.Invite
 import java.time.LocalDateTime
 
 @Entity(name = "space")
@@ -23,8 +22,6 @@ class Space(
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var histories: MutableSet<History> = mutableSetOf(),
-
-
     ) : BaseEntity() {
 
     fun addHistory(history: History) {
