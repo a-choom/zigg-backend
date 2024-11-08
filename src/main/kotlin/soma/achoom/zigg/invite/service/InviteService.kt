@@ -35,7 +35,7 @@ class InviteService(
     fun getInvites(authentication: Authentication): List<InviteResponseDto> {
         val user = userService.authenticationToUser(authentication)
         val invites = inviteRepository.findAllByInvitee(user)
-        return invites.map {
+        return invites.filter { it.status == InviteStatus.WAITING  } .map {
             InviteResponseDto(
                 inviteId = it.inviteId,
                 inviter = UserResponseDto(
