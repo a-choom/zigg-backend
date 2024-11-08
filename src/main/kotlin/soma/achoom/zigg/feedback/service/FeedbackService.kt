@@ -92,7 +92,7 @@ class FeedbackService @Autowired constructor(
         )
 
         feedback.recipients.addAll(feedbackRecipient)
-        history.feedbacks.add(feedback)
+        history.feedbacks.add(feedbackRepository.save(feedback))
         historyRepository.save(history)
 
         return FeedbackResponseDto(

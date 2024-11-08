@@ -22,8 +22,6 @@ class Space(
 
     @OneToMany(cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     var histories: MutableSet<History> = mutableSetOf(),
-
-
     ) : BaseEntity() {
 
     fun addHistory(history: History) {

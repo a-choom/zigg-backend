@@ -58,12 +58,9 @@ class HistoryService @Autowired constructor(
             name = historyRequestDto.historyName,
             videoThumbnailUrl = historyThumbnailImage,
         )
-        space.addHistory(history)
+        space.addHistory(historyRepository.save(history))
         spaceRepository.save(space)
-        space.histories.map{
-            println(it.videoKey.videoKey)
-            println(it.videoThumbnailUrl.imageKey)
-        }
+
         return HistoryResponseDto(
             historyId = history.historyId,
             historyName = history.name,
