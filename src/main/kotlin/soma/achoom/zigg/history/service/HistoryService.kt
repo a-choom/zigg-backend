@@ -84,8 +84,6 @@ class HistoryService @Autowired constructor(
             ?: throw SpaceNotFoundException()
         val histories = space.histories
         return histories.map { history ->
-            println(history.videoKey.videoKey)
-            println(history.videoThumbnailUrl.imageKey)
             HistoryResponseDto(
                 historyId = history.historyId,
                 historyName = history.name,
