@@ -10,6 +10,7 @@ import soma.achoom.zigg.content.repository.ImageRepository
 import soma.achoom.zigg.content.repository.VideoRepository
 import soma.achoom.zigg.firebase.dto.FCMTokenRequestDto
 import soma.achoom.zigg.firebase.service.FCMService
+import soma.achoom.zigg.invite.repository.InviteRepository
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.space.repository.SpaceUserRepository
 import soma.achoom.zigg.user.dto.UserRequestDto
@@ -28,7 +29,7 @@ class UserService(
     private val spaceUserRepository: SpaceUserRepository,
     private val imageRepository: ImageRepository,
     private val videoRepository: VideoRepository,
-    private val s3Service: S3Service
+    private val s3Service: S3Service, private val inviteRepository: InviteRepository
 ) {
     @Transactional(readOnly = true)
     fun searchUser(authentication: Authentication, nickname: String): List<UserResponseDto> {
@@ -139,6 +140,13 @@ class UserService(
         videoRepository.findVideosByUploader(user).forEach {
             it.uploader = null
             videoRepository.save(it)
+        }
+        inviteRepository.findInvitesByInviter(user).forEach {
+            inviteRepository.delete(it)
+        }
+
+        inviteRepository.findInvitesByInvitee(user).forEach {
+            inviteRepository.delete(it)
         }
         userRepository.delete(user)
     }
