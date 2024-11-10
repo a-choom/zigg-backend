@@ -10,6 +10,7 @@ import soma.achoom.zigg.TestConfig
 import soma.achoom.zigg.board.entity.Board
 import soma.achoom.zigg.board.repository.BoardRepository
 import soma.achoom.zigg.comment.entity.Comment
+import soma.achoom.zigg.comment.entity.CommentCreator
 import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.data.DummyDataUtil
 import soma.achoom.zigg.post.entity.Post
@@ -55,7 +56,8 @@ class PostRepositoryTest {
                     creator = user,
                     title = "title$i",
                     textContent = "content$i",
-                    board = board
+                    board = board,
+                    anonymous = false
 
                 )
             )
@@ -127,7 +129,8 @@ class PostRepositoryTest {
             creator = user,
             title = "title",
             textContent = "content",
-            board = board
+            board = board,
+            anonymous = false
         )
         postRepository.save(post)
 
@@ -144,25 +147,34 @@ class PostRepositoryTest {
             creator = user,
             title = "title",
             textContent = "content",
-            board = board
+            board = board,
+            anonymous = false
         )
         postRepository.save(post)
 
         val comment1 = Comment(
-            creator = user,
+            creator = CommentCreator(
+                user = user,
+                post = post,
+                anonymous = false
+            ),
             textComment = "comment",
             post = post
         )
         val comment2 = Comment(
-            creator = user,
+            creator = CommentCreator(
+                user = user,
+                post = post,
+                anonymous = false
+            ),
             textComment = "comment",
             post = post
         )
         comment1.replies.add(comment2)
         postRepository.save(post)
         postRepository.delete(post)
-        println(commentRepository.findCommentsByCreator(user).size)
-        assert(commentRepository.findCommentsByCreator(user).isEmpty())
+        println(commentRepository.findCommentsByCreatorUser(user).size)
+        assert(commentRepository.findCommentsByCreatorUser(user).isEmpty())
     }
 
 }

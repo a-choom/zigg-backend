@@ -8,14 +8,17 @@ import soma.achoom.zigg.board.repository.BoardRepository
 import soma.achoom.zigg.comment.dto.CommentRequestDto
 import soma.achoom.zigg.comment.dto.CommentResponseDto
 import soma.achoom.zigg.comment.entity.Comment
+import soma.achoom.zigg.comment.entity.CommentCreator
 import soma.achoom.zigg.comment.entity.CommentLike
 import soma.achoom.zigg.comment.exception.AlreadyChildCommentException
 import soma.achoom.zigg.comment.exception.CommentNotFoundException
 import soma.achoom.zigg.comment.exception.CommentUserMissMatchException
+import soma.achoom.zigg.comment.repository.CommentCreatorRepository
 import soma.achoom.zigg.comment.repository.CommentLikeRepository
 import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.post.exception.PostNotFoundException
 import soma.achoom.zigg.post.repository.PostRepository
+import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.user.dto.UserResponseDto
 import soma.achoom.zigg.user.service.UserService
 
@@ -25,7 +28,9 @@ class CommentService(
     private val postRepository: PostRepository,
     private val userService: UserService,
     private val boardRepository: BoardRepository,
-    private val commentLikeRepository: CommentLikeRepository
+    private val commentLikeRepository: CommentLikeRepository,
+    private val commentCreatorRepository: CommentCreatorRepository,
+    private val s3Service: S3Service
 ){
 
     @Transactional(readOnly = false)
@@ -34,10 +39,18 @@ class CommentService(
         val board = boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
 
         val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
+
+        val commentCreator =commentCreatorRepository.findCommentCreatorByPostAndUserAndAnonymous(post, user, commentRequestDto.anonymous) ?: CommentCreator(
+            post = post,
+            user = user,
+            anonymous = commentRequestDto.anonymous,
+            anonymousName = if(post.creator == user) "글쓴이(익명)" else if(commentRequestDto.anonymous) "익명 " + (commentCreatorRepository.countAnonymousInPost(post) + 1).toString() else null
+        )
+
         val comment = Comment(
-            creator = user,
+            creator = commentCreator,
             textComment = commentRequestDto.message,
-            post = post
+            post = post,
         )
         commentRepository.save(comment)
         return CommentResponseDto(
@@ -46,9 +59,8 @@ class CommentService(
             commentMessage = comment.textComment,
             commentCreator = UserResponseDto(
                 userId = user.userId,
-                userName = user.name,
-                userNickname = user.nickname,
-                profileImageUrl = user.profileImageKey.imageKey,
+                userName = if(comment.creator.anonymous) comment.creator.anonymousName else user.name,
+                profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
             ),
             createdAt = comment.createAt,
         )
@@ -62,11 +74,17 @@ class CommentService(
         if(parentComment.parentComment != null){
             throw AlreadyChildCommentException()
         }
+        val commentCreator =commentCreatorRepository.findCommentCreatorByPostAndUserAndAnonymous(post, user, commentRequestDto.anonymous) ?: CommentCreator(
+            post = post,
+            user = user,
+            anonymous = commentRequestDto.anonymous,
+            anonymousName = if(post.creator == user) "글쓴이(익명)" else if(commentRequestDto.anonymous) "익명 " + (commentCreatorRepository.countAnonymousInPost(post) + 1).toString() else null
+        )
         val childComment = Comment(
             parentComment = parentComment,
-            creator = user,
+            creator = commentCreator,
             textComment = commentRequestDto.message,
-            post = post
+            post = post,
         )
 
         parentComment.replies.add(childComment)
@@ -78,19 +96,17 @@ class CommentService(
             commentMessage = childComment.textComment,
             commentCreator = UserResponseDto(
                 userId = user.userId,
-                userName = user.name,
-                userNickname = user.nickname,
-                profileImageUrl = user.profileImageKey.imageKey,
+                userName = if(childComment.creator.anonymous) childComment.creator.anonymousName else user.name,
+                profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
             ),
             parentComment = CommentResponseDto(
                 commentId = parentComment.commentId,
                 commentLike = parentComment.likes,
                 commentMessage = parentComment.textComment,
                 commentCreator = UserResponseDto(
-                    userId = parentComment.creator.userId,
-                    userName = parentComment.creator.name,
-                    userNickname = parentComment.creator.nickname,
-                    profileImageUrl = parentComment.creator.profileImageKey.imageKey,
+                    userId = parentComment.creator.user.userId,
+                    userName = if(parentComment.creator.anonymous) parentComment.creator.anonymousName else parentComment.creator.user.name,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(parentComment.creator.user.profileImageKey.imageKey),
                 ),
                 createdAt = parentComment.createAt,
             ),
@@ -112,25 +128,21 @@ class CommentService(
             commentMessage = comment.textComment,
             commentCreator = UserResponseDto(
                 userId = user.userId,
-                userName = user.name,
-                userNickname = user.nickname,
-                profileImageUrl = user.profileImageKey.imageKey,
+                userName = if(comment.creator.anonymous) comment.creator.anonymousName else user.name,
+                profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
+            ),
+            parentComment = CommentResponseDto(
+                commentId = comment.commentId,
+                commentLike = comment.likes,
+                commentMessage = comment.textComment,
+                commentCreator = UserResponseDto(
+                    userId = comment.creator.user.userId,
+                    userName = if(comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user.name,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
+                ),
+                createdAt = comment.createAt,
             ),
             createdAt = comment.createAt,
-            childComment = comment.replies.map {
-                CommentResponseDto(
-                    commentId = it.commentId,
-                    commentLike = it.likes,
-                    commentMessage = it.textComment,
-                    commentCreator = UserResponseDto(
-                        userId = it.creator.userId,
-                        userName = it.creator.name,
-                        userNickname = it.creator.nickname,
-                        profileImageUrl = it.creator.profileImageKey.imageKey,
-                    ),
-                    createdAt = it.createAt,
-                )
-            }.toMutableList()
         )
     }
     @Transactional(readOnly = false)
@@ -138,10 +150,12 @@ class CommentService(
         val user = userService.authenticationToUser(authentication)
         val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
         val comment = commentRepository.findById(commentId).orElseThrow { CommentNotFoundException() }
-        if(comment.creator != user){
+        if(comment.creator.user != user){
             throw CommentUserMissMatchException()
         }
         comment.isDeleted = true
+        comment.creator.anonymous = true
+        comment.creator.anonymousName = "알 수 없음."
         comment.textComment = "삭제된 댓글입니다."
         commentRepository.save(comment)
     }
@@ -158,10 +172,9 @@ class CommentService(
                 commentLike = comment.likes,
                 commentMessage = comment.textComment,
                 commentCreator = UserResponseDto(
-                    userId = user.userId,
-                    userName = user.name,
-                    userNickname = user.nickname,
-                    profileImageUrl = user.profileImageKey.imageKey,
+                    userId = comment.creator.user.userId,
+                    userName = if(comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user.name,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
                 ),
                 createdAt = comment.createAt,
             )
@@ -177,10 +190,9 @@ class CommentService(
             commentLike = comment.likes,
             commentMessage = comment.textComment,
             commentCreator = UserResponseDto(
-                userId = user.userId,
-                userName = user.name,
-                userNickname = user.nickname,
-                profileImageUrl = user.profileImageKey.imageKey,
+                userId = comment.creator.user.userId,
+                userName = if (comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user.name,
+                profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
             ),
             createdAt = comment.createAt,
         )

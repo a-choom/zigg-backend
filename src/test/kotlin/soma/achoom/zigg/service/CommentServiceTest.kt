@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 import soma.achoom.zigg.TestConfig.Companion.SPACE_IMAGE_URL
 import soma.achoom.zigg.board.entity.Board
 import soma.achoom.zigg.board.repository.BoardRepository
+import soma.achoom.zigg.board.service.BoardService
 import soma.achoom.zigg.comment.dto.CommentRequestDto
 import soma.achoom.zigg.comment.service.CommentService
 import soma.achoom.zigg.data.DummyDataUtil
@@ -23,6 +24,9 @@ import soma.achoom.zigg.s3.service.S3Service
 @ActiveProfiles("test")
 @Transactional
 class CommentServiceTest {
+    @Autowired
+    private lateinit var boardService: BoardService
+
     @Autowired
     private lateinit var postService: PostService
 
@@ -52,7 +56,7 @@ class CommentServiceTest {
         board = Board(name = "test board")
         boardRepository.save(board)
 
-        post = Post(board = board, title = "test post", textContent = "test content", creator = user)
+        post = Post(board = board, title = "test post", textContent = "test content", creator = user, anonymous = false)
         postRepository.save(post)
 
     }
@@ -112,5 +116,21 @@ class CommentServiceTest {
         println(second)
         commentService.deleteComment(auth1,board.boardId!!, post.postId!!,first.commentId!!)
         println(postService.getPost(auth1,board.boardId!!,post.postId!!))
+    }
+    @Test
+    fun `create anonymous comment`(){
+        val user1 = dummyDataUtil.createDummyUser()
+        val auth1 = dummyDataUtil.createDummyAuthentication(user1)
+        val first = commentService.createComment(auth1, board.boardId!!, post.postId!!, CommentRequestDto("Test Comment", true))
+        val user2 = dummyDataUtil.createDummyUser()
+        val auth2 = dummyDataUtil.createDummyAuthentication(user2)
+        val second = commentService.createChildComment(auth2, board.boardId!!, post.postId!!, first.commentId!!, CommentRequestDto("Test Child Comment", true))
+        val third = commentService.createComment(auth1, board.boardId!!, post.postId!!, CommentRequestDto("Test Comment", true))
+        println(first.commentCreator.userName)
+        println(second.commentCreator.userName)
+        println(third.commentCreator.userName)
+        assert(first.commentCreator.userName == "익명 1")
+        assert(second.commentCreator.userName == "익명 2")
+        assert(third.commentCreator.userName == "익명 1")
     }
 }

@@ -80,8 +80,7 @@ jobs:
       - name: Delete tag if build or test fails
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RC_TAG: ${{ env.RC_TAG }}
+          RC_TAG: ${{ needs.build-and-deploy.outputs.rc_tag }}
         run: |
-          echo "Deleting tag $RC_TAG due to failure"
           git tag -d "$RC_TAG"
           git push origin :refs/tags/"$RC_TAG"
