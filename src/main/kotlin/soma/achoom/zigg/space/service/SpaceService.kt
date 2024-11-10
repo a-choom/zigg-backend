@@ -98,24 +98,6 @@ class SpaceService(
             }.toMutableSet(),
             createdAt = space.createAt,
             updatedAt = space.updateAt,
-            invites = inviteRepository.findInvitesBySpace(space).map {
-                InviteResponseDto(
-                    inviteId = it.inviteId,
-                    invitedUser = UserResponseDto(
-                        userName = it.invitee.name,
-                        userNickname = it.invitee.nickname,
-                        profileImageUrl = s3Service.getPreSignedGetUrl(it.invitee.profileImageKey.imageKey),
-                        userId = it.invitee.userId
-                    ),
-                    inviter = UserResponseDto(
-                        userName = it.invitee.name,
-                        userNickname = it.invitee.nickname,
-                        profileImageUrl = s3Service.getPreSignedGetUrl(it.invitee.profileImageKey.imageKey),
-                        userId = it.invitee.userId
-                    ),
-                    createdAt = it.createAt
-                )
-            }.toMutableSet()
         )
     }
 
@@ -268,7 +250,7 @@ class SpaceService(
                     feedbackCount = it.feedbacks.size,
                     videoDuration = it.videoKey.duration,
 
-                )
+                    )
             }.toMutableSet(),
             createdAt = space.createAt,
             updatedAt = space.updateAt,
@@ -311,6 +293,17 @@ class SpaceService(
                     userName = it.user?.name
                 )
             }.toMutableSet(),
+            history = space.histories.map {
+                HistoryResponseDto(
+                    historyId = it.historyId,
+                    historyName = it.name,
+                    historyVideoPreSignedUrl = s3Service.getPreSignedGetUrl(it.videoKey.videoKey),
+                    historyVideoThumbnailPreSignedUrl = s3Service.getPreSignedGetUrl(it.videoThumbnailUrl.imageKey),
+                    createdAt = it.createAt,
+                    feedbackCount = it.feedbacks.size,
+                    videoDuration = it.videoKey.duration,
+                )
+            }.toMutableSet(),
             createdAt = space.createAt,
             updatedAt = space.updateAt,
         )
@@ -319,12 +312,10 @@ class SpaceService(
     @Transactional(readOnly = false)
     fun deleteSpace(authentication: Authentication, spaceId: Long) {
         val user = userService.authenticationToUser(authentication)
-
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
 
         validateSpaceUser(user, space)
         spaceUserRepository.deleteAllBySpace(space)
-        // Delete the space
         spaceRepository.delete(space)
     }
 
@@ -333,12 +324,9 @@ class SpaceService(
         authentication: Authentication, spaceId: Long, spaceReferenceUrlRequestDto: SpaceReferenceUrlRequestDto
     ): SpaceResponseDto {
         val user = userService.authenticationToUser(authentication)
-
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
-
         validateSpaceUser(user, space)
         space.referenceVideoKey = spaceReferenceUrlRequestDto.referenceUrl
-
         spaceRepository.save(space)
 
         return SpaceResponseDto(
@@ -356,6 +344,17 @@ class SpaceService(
                     userName = it.user?.name
                 )
             }.toMutableSet(),
+            history = space.histories.map {
+                HistoryResponseDto(
+                    historyId = it.historyId,
+                    historyName = it.name,
+                    historyVideoPreSignedUrl = s3Service.getPreSignedGetUrl(it.videoKey.videoKey),
+                    historyVideoThumbnailPreSignedUrl = s3Service.getPreSignedGetUrl(it.videoThumbnailUrl.imageKey),
+                    createdAt = it.createAt,
+                    feedbackCount = it.feedbacks.size,
+                    videoDuration = it.videoKey.duration,
+                )
+            }.toMutableSet(),
             createdAt = space.createAt,
             updatedAt = space.updateAt,
         )
@@ -364,13 +363,11 @@ class SpaceService(
     @Transactional(readOnly = false)
     fun deleteReferenceUrl(authentication: Authentication, spaceId: Long): SpaceResponseDto {
         val user = userService.authenticationToUser(authentication)
-
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
-
         validateSpaceUser(user, space)
         space.referenceVideoKey = null
-
         spaceRepository.save(space)
+
         return SpaceResponseDto(
             spaceId = space.spaceId,
             spaceName = space.name,
@@ -384,6 +381,17 @@ class SpaceService(
                     spaceRole = it.role,
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
                     userName = it.user?.name
+                )
+            }.toMutableSet(),
+            history = space.histories.map {
+                HistoryResponseDto(
+                    historyId = it.historyId,
+                    historyName = it.name,
+                    historyVideoPreSignedUrl = s3Service.getPreSignedGetUrl(it.videoKey.videoKey),
+                    historyVideoThumbnailPreSignedUrl = s3Service.getPreSignedGetUrl(it.videoThumbnailUrl.imageKey),
+                    createdAt = it.createAt,
+                    feedbackCount = it.feedbacks.size,
+                    videoDuration = it.videoKey.duration,
                 )
             }.toMutableSet(),
             createdAt = space.createAt,

@@ -26,13 +26,13 @@ class Post(
     @Column(name = "text_content")
     var textContent: String,
 
-    @OneToMany(cascade = [CascadeType.PERSIST])
+    @OneToMany(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var imageContents: MutableList<Image> = mutableListOf(),
 
-    @ManyToOne(cascade = [CascadeType.PERSIST])
+    @ManyToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var videoContent: Video? = null,
 
-    @ManyToOne(cascade = [CascadeType.PERSIST])
+    @ManyToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var videoThumbnail: Image? = null,
 
     ) : BaseEntity() {

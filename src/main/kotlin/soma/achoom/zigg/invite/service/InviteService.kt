@@ -35,20 +35,20 @@ class InviteService(
     fun getInvites(authentication: Authentication): List<InviteResponseDto> {
         val user = userService.authenticationToUser(authentication)
         val invites = inviteRepository.findAllByInvitee(user)
-        return invites.map {
+        return invites.filter { it.status == InviteStatus.WAITING  } .map {
             InviteResponseDto(
                 inviteId = it.inviteId,
                 inviter = UserResponseDto(
                     userId = it.inviter.userId,
                     userName = it.inviter.name,
                     userNickname = it.inviter.nickname,
-                    profileImageUrl = it.inviter.profileImageKey.imageKey,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(it.inviter.profileImageKey.imageKey,)
                 ),
                 invitedUser = UserResponseDto(
                     userId = it.invitee.userId,
                     userName = it.invitee.name,
                     userNickname = it.invitee.nickname,
-                    profileImageUrl = it.invitee.profileImageKey.imageKey,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(it.invitee.profileImageKey.imageKey),
                 ),
                 space = SpaceResponseDto(
                     spaceId = it.space.spaceId,

@@ -61,6 +61,12 @@ class PostService(
                     duration = it.videoDuration
                 )
             },
+            videoThumbnail = postRequestDto.postVideoThumbnail?.let {
+                history?.videoThumbnailUrl ?: Image.fromUrl(
+                    uploader = user,
+                    imageUrl = it
+                )
+            },
             board = board,
             creator = user,
         )

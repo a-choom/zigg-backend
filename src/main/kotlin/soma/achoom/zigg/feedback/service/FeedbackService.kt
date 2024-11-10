@@ -10,9 +10,9 @@ import soma.achoom.zigg.feedback.dto.FeedbackResponseDto
 import soma.achoom.zigg.feedback.entity.Feedback
 import soma.achoom.zigg.feedback.exception.FeedbackNotFoundException
 import soma.achoom.zigg.feedback.repository.FeedbackRepository
-import soma.achoom.zigg.global.ResponseDtoManager
 import soma.achoom.zigg.history.exception.HistoryNotFoundException
 import soma.achoom.zigg.history.repository.HistoryRepository
+import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.space.dto.SpaceUserResponseDto
 import soma.achoom.zigg.space.exception.SpaceNotFoundException
 import soma.achoom.zigg.space.repository.SpaceRepository
@@ -20,8 +20,6 @@ import soma.achoom.zigg.space.repository.SpaceUserRepository
 import soma.achoom.zigg.space.service.SpaceService
 import soma.achoom.zigg.space.exception.SpaceUserNotFoundInSpaceException
 import soma.achoom.zigg.user.service.UserService
-
-import java.util.UUID
 
 @Service
 class FeedbackService @Autowired constructor(
@@ -31,6 +29,7 @@ class FeedbackService @Autowired constructor(
     private val spaceRepository: SpaceRepository,
     private val spaceService: SpaceService,
     private val userService: UserService,
+    private val s3Service: S3Service,
 ) {
     @Transactional(readOnly = true)
     fun getFeedbacks(authentication: Authentication, spaceId: Long, historyId: Long): List<FeedbackResponseDto> {
@@ -49,7 +48,7 @@ class FeedbackService @Autowired constructor(
                     userId = it.creator.user?.userId,
                     userName = it.creator.user?.name,
                     userNickname = it.creator.user?.nickname,
-                    profileImageUrl = it.creator.user?.profileImageKey?.imageKey,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(it.creator.user?.profileImageKey?.imageKey),
                     spaceUserId = it.creator.spaceUserId,
                     spaceRole = it.creator.role,
                 ),
@@ -58,7 +57,7 @@ class FeedbackService @Autowired constructor(
                         userId = spaceUser.user?.userId,
                         userName = spaceUser.user?.name,
                         userNickname = spaceUser.user?.nickname,
-                        profileImageUrl = spaceUser.user?.profileImageKey?.imageKey,
+                        profileImageUrl = s3Service.getPreSignedGetUrl(spaceUser.user?.profileImageKey?.imageKey),
                         spaceUserId = spaceUser.spaceUserId,
                         spaceRole = spaceUser.role,
                     )
@@ -69,7 +68,12 @@ class FeedbackService @Autowired constructor(
     }
 
     @Transactional(readOnly = false)
-    fun createFeedback(authentication: Authentication, spaceId: Long, historyId: Long, feedbackRequestDto: FeedbackRequestDto): FeedbackResponseDto {
+    fun createFeedback(
+        authentication: Authentication,
+        spaceId: Long,
+        historyId: Long,
+        feedbackRequestDto: FeedbackRequestDto
+    ): FeedbackResponseDto {
         val user = userService.authenticationToUser(authentication)
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
 
@@ -88,7 +92,7 @@ class FeedbackService @Autowired constructor(
         )
 
         feedback.recipients.addAll(feedbackRecipient)
-        history.feedbacks.add(feedback)
+        history.feedbacks.add(feedbackRepository.save(feedback))
         historyRepository.save(history)
 
         return FeedbackResponseDto(
@@ -99,7 +103,7 @@ class FeedbackService @Autowired constructor(
                 userId = feedback.creator.user?.userId,
                 userName = feedback.creator.user?.name,
                 userNickname = feedback.creator.user?.nickname,
-                profileImageUrl = feedback.creator.user?.profileImageKey?.imageKey,
+                profileImageUrl = s3Service.getPreSignedGetUrl(feedback.creator.user?.profileImageKey?.imageKey),
                 spaceUserId = feedback.creator.spaceUserId,
                 spaceRole = feedback.creator.role,
             ),
@@ -108,7 +112,7 @@ class FeedbackService @Autowired constructor(
                     userId = it.user?.userId,
                     userName = it.user?.name,
                     userNickname = it.user?.nickname,
-                    profileImageUrl = it.user?.profileImageKey?.imageKey,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
                 )
@@ -118,7 +122,13 @@ class FeedbackService @Autowired constructor(
     }
 
     @Transactional(readOnly = false)
-    fun updateFeedback(authentication: Authentication, spaceId: Long, historyId: Long, feedbackId: Long, feedbackRequestDto: FeedbackRequestDto): FeedbackResponseDto {
+    fun updateFeedback(
+        authentication: Authentication,
+        spaceId: Long,
+        historyId: Long,
+        feedbackId: Long,
+        feedbackRequestDto: FeedbackRequestDto
+    ): FeedbackResponseDto {
         val user = userService.authenticationToUser(authentication)
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
 
@@ -145,7 +155,7 @@ class FeedbackService @Autowired constructor(
                 userId = feedback.creator.user?.userId,
                 userName = feedback.creator.user?.name,
                 userNickname = feedback.creator.user?.nickname,
-                profileImageUrl = feedback.creator.user?.profileImageKey?.imageKey,
+                profileImageUrl = s3Service.getPreSignedGetUrl(feedback.creator.user?.profileImageKey?.imageKey),
                 spaceUserId = feedback.creator.spaceUserId,
                 spaceRole = feedback.creator.role,
             ),
@@ -154,7 +164,7 @@ class FeedbackService @Autowired constructor(
                     userId = it.user?.userId,
                     userName = it.user?.name,
                     userNickname = it.user?.nickname,
-                    profileImageUrl = it.user?.profileImageKey?.imageKey,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
                 )
@@ -179,7 +189,12 @@ class FeedbackService @Autowired constructor(
     }
 
     @Transactional(readOnly = true)
-    fun getFeedback(authentication: Authentication, spaceId: Long, historyId: Long, feedbackId: Long): FeedbackResponseDto {
+    fun getFeedback(
+        authentication: Authentication,
+        spaceId: Long,
+        historyId: Long,
+        feedbackId: Long
+    ): FeedbackResponseDto {
         val user = userService.authenticationToUser(authentication)
 
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
@@ -197,7 +212,7 @@ class FeedbackService @Autowired constructor(
                 userId = feedback.creator.user?.userId,
                 userName = feedback.creator.user?.name,
                 userNickname = feedback.creator.user?.nickname,
-                profileImageUrl = feedback.creator.user?.profileImageKey?.imageKey,
+                profileImageUrl = s3Service.getPreSignedGetUrl(feedback.creator.user?.profileImageKey?.imageKey),
                 spaceUserId = feedback.creator.spaceUserId,
                 spaceRole = feedback.creator.role,
             ),
@@ -206,7 +221,7 @@ class FeedbackService @Autowired constructor(
                     userId = it.user?.userId,
                     userName = it.user?.name,
                     userNickname = it.user?.nickname,
-                    profileImageUrl = it.user?.profileImageKey?.imageKey,
+                    profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
                 )
