@@ -144,7 +144,6 @@ class UserService(
         inviteRepository.findInvitesByInviter(user).forEach {
             inviteRepository.delete(it)
         }
-
         inviteRepository.findInvitesByInvitee(user).forEach {
             inviteRepository.delete(it)
         }
