@@ -8,4 +8,6 @@ import soma.achoom.zigg.user.entity.User
 interface InviteRepository : JpaRepository<Invite,Long>{
     fun findAllByInvitee(user:User):List<Invite>
     fun findInvitesBySpace(space: Space):List<Invite>
+    fun findInvitesByInviter(user: User):List<Invite>
+    fun findInvitesByInvitee(user: User):List<Invite>
 }

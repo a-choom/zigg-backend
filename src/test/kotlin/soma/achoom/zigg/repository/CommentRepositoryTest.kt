@@ -4,12 +4,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import soma.achoom.zigg.board.entity.Board
 import soma.achoom.zigg.board.repository.BoardRepository
 import soma.achoom.zigg.comment.entity.Comment
+import soma.achoom.zigg.comment.entity.CommentCreator
 import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.data.DummyDataUtil
 import soma.achoom.zigg.post.entity.Post
@@ -49,15 +49,24 @@ class CommentRepositoryTest {
             board = board,
             title = "test post",
             textContent = "test content",
-            creator = user
+            creator = user,
+            anonymous = false
         )
         postRepository.save(post)
         // given
         val parentComment = Comment(
-            creator = user,
+            creator = CommentCreator(
+                post = post,
+                user = user,
+                anonymous = false,
+            ),
             textComment = "parent comment",
             replies = mutableListOf(Comment(
-                creator = user,
+                creator = CommentCreator(
+                    post = post,
+                    user = user,
+                    anonymous = false,
+                ),
                 textComment = "child comment",
                 post = post
             )),
@@ -82,15 +91,24 @@ class CommentRepositoryTest {
             board = board,
             title = "test post",
             textContent = "test content",
-            creator = user
+            creator = user,
+            anonymous = false
         )
         postRepository.save(post)
         // given
         val parentComment = Comment(
-            creator = user,
+            creator = CommentCreator(
+                post = post,
+                user = user,
+                anonymous = false,
+            ),
             textComment = "parent comment",
             replies = mutableListOf(Comment(
-                creator = user,
+                creator = CommentCreator(
+                    post = post,
+                    user = user,
+                    anonymous = false,
+                ),
                 textComment = "child comment",
                 post = post
             )),

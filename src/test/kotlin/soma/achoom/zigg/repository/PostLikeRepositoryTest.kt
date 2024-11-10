@@ -44,7 +44,8 @@ class PostLikeRepositoryTest {
             creator = user,
             title = "title",
             textContent = "content",
-            board = board
+            board = board,
+            anonymous = false
         )
 
         postRepository.save(post)

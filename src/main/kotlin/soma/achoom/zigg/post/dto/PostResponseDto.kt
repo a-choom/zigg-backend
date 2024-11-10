@@ -4,11 +4,14 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import soma.achoom.zigg.comment.dto.CommentResponseDto
 import soma.achoom.zigg.content.dto.ImageResponseDto
 import soma.achoom.zigg.content.dto.VideoResponseDto
+import soma.achoom.zigg.user.dto.UserResponseDto
+import java.time.LocalDateTime
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class PostResponseDto(
     val postId: Long,
     val postTitle: String,
+    val postCreator: UserResponseDto,
     val postMessage: String? = null,
     val postImageContents: List<ImageResponseDto>? = null,
     val postVideoContent: VideoResponseDto? = null,
@@ -18,7 +21,9 @@ data class PostResponseDto(
     val commentCnt: Long,
     val scrapCnt: Long,
     val isScraped: Boolean,
-    val isLiked: Boolean
-) {
+    val isLiked: Boolean,
+    val createdAt: LocalDateTime,
+
+    ) {
 
 }
