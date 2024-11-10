@@ -223,7 +223,7 @@ class PostService(
             postMessage = post.textContent,
             postImageContents = post.imageContents.map { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
                 .toList(),
-            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
+            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey))} ?: post.imageContents.firstOrNull()?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
             postVideoContent = post.videoContent?.let {
                 VideoResponseDto(
                     videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey), videoDuration = it.duration
@@ -250,7 +250,7 @@ class PostService(
             postMessage = post.textContent,
             postImageContents = post.imageContents.map { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
                 .toList(),
-            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
+            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) } ?: post.imageContents.firstOrNull()?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
             postVideoContent = post.videoContent?.let {
                 VideoResponseDto(
                     videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey), videoDuration = it.duration
