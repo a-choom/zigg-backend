@@ -23,7 +23,4 @@ data class PostResponseDto(
     val isScraped: Boolean,
     val isLiked: Boolean,
     val createdAt: LocalDateTime,
-
-    ) {
-
-}
+    )
