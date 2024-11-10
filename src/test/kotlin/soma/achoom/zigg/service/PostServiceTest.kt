@@ -6,6 +6,7 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.test.annotation.DirtiesContext
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
 import soma.achoom.zigg.TestConfig.Companion.SPACE_IMAGE_URL
@@ -59,7 +60,7 @@ class PostServiceTest {
         board = Board(name = "test board")
         boardRepository.save(board)
 
-        post = Post(board = board, title = "test post", textContent = "test content", creator = user)
+        post = Post(board = board, title = "test post", textContent = "test content", creator = user, anonymous = false)
         postRepository.save(post)
     }
 
@@ -79,7 +80,7 @@ class PostServiceTest {
     fun `update post`() {
         val user = dummyDataUtil.createDummyUser()
         val auth = dummyDataUtil.createDummyAuthentication(user)
-        val newPost = Post(board = board, title = "test post", textContent = "test content", creator = user)
+        val newPost = Post(board = board, title = "test post", textContent = "test content", creator = user, anonymous = false)
         postRepository.save(newPost)
         val postResponse = postService.updatePost(
             auth, newPost.postId!!, PostRequestDto(
@@ -94,7 +95,7 @@ class PostServiceTest {
     fun `delete post`(){
         val user = dummyDataUtil.createDummyUser()
         val auth = dummyDataUtil.createDummyAuthentication(user)
-        val newPost = Post(board = board, title = "test post", textContent = "test content", creator = user)
+        val newPost = Post(board = board, title = "test post", textContent = "test content", creator = user, anonymous = false)
         postRepository.save(newPost)
         postService.deletePost(auth, newPost.postId!!)
         assert(postRepository.findById(newPost.postId!!).isEmpty)
@@ -166,5 +167,47 @@ class PostServiceTest {
         )
         commentService.createComment(auth, board.boardId!!, newPost.postId, CommentRequestDto("test comment"))
         assert(commentRepository.findAll().size == 1)
+    }
+    @Test
+    fun `create anonymous post`(){
+        val user = dummyDataUtil.createDummyUser()
+        val auth = dummyDataUtil.createDummyAuthentication(user)
+        val postResponse = postService.createPost(
+            auth, board.boardId!!, PostRequestDto(
+                postTitle = "test post",
+                postMessage = "test content",
+                anonymous = true
+            )
+        )
+        assert(postResponse.postTitle == "test post")
+        println(postResponse.postCreator.userName)
+        assert(postResponse.postCreator.userName == "글쓴이")
+    }
+    @Test
+    fun `create post with image`(){
+        val user = dummyDataUtil.createDummyUser()
+        val auth = dummyDataUtil.createDummyAuthentication(user)
+        val postResponse = postService.createPost(
+            auth, board.boardId!!, PostRequestDto(
+                postTitle = "test post",
+                postMessage = "test content",
+            )
+        )
+        val commentResponse = commentService.createComment(auth, board.boardId!!, postResponse.postId, CommentRequestDto("test comment"))
+        println(commentResponse.commentCreator.userName)
+        assert(commentResponse.commentCreator.userName == "글쓴이(익명)")
+        val commenter1 = dummyDataUtil.createDummyUser()
+        val commenter1Auth = dummyDataUtil.createDummyAuthentication(commenter1)
+
+        val commenter2 = dummyDataUtil.createDummyUser()
+        val commenter2Auth = dummyDataUtil.createDummyAuthentication(commenter2)
+
+        commentService.createComment(commenter1Auth, board.boardId!!, postResponse.postId, CommentRequestDto("test comment"))
+        commentService.createComment(commenter2Auth, board.boardId!!, postResponse.postId, CommentRequestDto("test comment"))
+        commentService.createChildComment(commenter1Auth, board.boardId!!, postResponse.postId, commentResponse.commentId!!, CommentRequestDto("test comment"))
+        commentService.createChildComment(commenter2Auth, board.boardId!!, postResponse.postId, commentResponse.commentId!!, CommentRequestDto("test comment"))
+
+        val postWithComments = postService.getPost(auth, board.boardId!!, postResponse.postId)
+        assert(postWithComments.comments?.size == 3)
     }
 }

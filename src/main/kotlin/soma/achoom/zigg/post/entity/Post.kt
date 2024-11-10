@@ -26,6 +26,9 @@ class Post(
     @Column(name = "text_content")
     var textContent: String,
 
+    @Column(name = "is_anonymous")
+    val anonymous : Boolean,
+
     @OneToMany(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var imageContents: MutableList<Image> = mutableListOf(),
 

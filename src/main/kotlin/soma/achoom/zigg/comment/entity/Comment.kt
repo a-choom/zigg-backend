@@ -18,9 +18,9 @@ class Comment(
     @ManyToOne
     val parentComment: Comment? = null,
 
-    @ManyToOne
+    @ManyToOne(cascade = [CascadeType.ALL])
     @JoinColumn(name = "creator")
-    var creator: User,
+    var creator: CommentCreator,
     @Column(name = "text_comment")
     var textComment: String,
     @Column(name = "likes")
