@@ -237,7 +237,7 @@ class PostService(
             createdAt = post.createAt,
             postCreator = UserResponseDto(
                 userId = post.creator.userId,
-                userName = if (post.anonymous) "글쓴이" else post.creator.name,
+                userName = if (post.anonymous) "익명" else post.creator.name,
                 userNickname = post.creator.nickname,
                 profileImageUrl = s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey)
             )
