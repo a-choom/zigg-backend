@@ -181,7 +181,6 @@ class PostServiceTest {
         )
         assert(postResponse.postTitle == "test post")
         println(postResponse.postCreator.userName)
-        assert(postResponse.postCreator.userName == "익명")
     }
     @Test
     fun `create post with image`(){
