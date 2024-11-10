@@ -24,6 +24,7 @@ class Post(
     var title: String,
 
     @Column(name = "text_content")
+    @Lob
     var textContent: String,
 
     @Column(name = "is_anonymous")
