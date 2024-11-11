@@ -239,8 +239,9 @@ class PostService(
                 userId = post.creator.userId,
                 userName = if (post.anonymous) "익명" else post.creator.name,
                 userNickname = post.creator.nickname,
-                profileImageUrl = s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey)
-            )
+                profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey)
+            ),
+            isAnonymous = post.anonymous
         )
     }
 
@@ -265,8 +266,9 @@ class PostService(
             postCreator = UserResponseDto(
                 userId = post.creator.userId,
                 userName = if (post.anonymous) "익명" else post.creator.name,
-                profileImageUrl = s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey)
+                profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey)
             ),
+            isAnonymous = post.anonymous,
             comments = commentRepository.findCommentsByPost(post).filter {
                 it.parentComment == null
             }.map {
@@ -277,7 +279,7 @@ class PostService(
                     commentCreator = UserResponseDto(
                         userId = it.creator.user.userId,
                         userName = if (it.creator.anonymous) it.creator.anonymousName else it.creator.user.name,
-                        profileImageUrl = s3Service.getPreSignedGetUrl(it.creator.user.profileImageKey.imageKey),
+                        profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey),
                     ),
                     createdAt = it.createAt,
                     childComment = it.replies.map { comment ->
@@ -288,11 +290,13 @@ class PostService(
                             commentCreator = UserResponseDto(
                                 userId = comment.creator.user.userId,
                                 userName = if (comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user.name,
-                                profileImageUrl = s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
+                                profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey),
                             ),
-                            createdAt = comment.createAt
+                            createdAt = comment.createAt,
+                            isAnonymous = comment.creator.anonymous
                         )
-                    }.toMutableList()
+                    }.toMutableList(),
+                    isAnonymous = it.creator.anonymous
                 )
             }
         )
