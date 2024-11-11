@@ -10,24 +10,19 @@ import soma.achoom.zigg.content.repository.ImageRepository
 import soma.achoom.zigg.firebase.dto.FCMEvent
 import soma.achoom.zigg.firebase.service.FCMService
 import soma.achoom.zigg.history.dto.HistoryResponseDto
-import soma.achoom.zigg.invite.dto.InviteResponseDto
+import soma.achoom.zigg.invite.dto.InviteRequestDto
 import soma.achoom.zigg.invite.entity.InviteStatus
 import soma.achoom.zigg.invite.entity.Invite
 import soma.achoom.zigg.invite.repository.InviteRepository
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.space.dto.*
 import soma.achoom.zigg.space.entity.*
-import soma.achoom.zigg.space.exception.GuestSpaceCreateLimitationException
 import soma.achoom.zigg.space.exception.SpaceNotFoundException
 import soma.achoom.zigg.space.repository.SpaceRepository
 import soma.achoom.zigg.space.exception.SpaceUserNotFoundInSpaceException
 import soma.achoom.zigg.space.repository.SpaceUserRepository
-import soma.achoom.zigg.user.dto.UserResponseDto
 import soma.achoom.zigg.user.entity.User
-import soma.achoom.zigg.user.entity.UserRole
-import soma.achoom.zigg.user.repository.UserRepository
 import soma.achoom.zigg.user.service.UserService
-import java.util.UUID
 
 
 @Service

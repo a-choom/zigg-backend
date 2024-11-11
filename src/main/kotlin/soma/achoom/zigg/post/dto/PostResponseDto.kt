@@ -17,6 +17,7 @@ data class PostResponseDto(
     val postVideoContent: VideoResponseDto? = null,
     val postThumbnailImage: ImageResponseDto? = null,
     val comments : List<CommentResponseDto>? = null,
+    val isAnonymous: Boolean,
     val likeCnt: Long,
     val commentCnt: Long,
     val scrapCnt: Long,
