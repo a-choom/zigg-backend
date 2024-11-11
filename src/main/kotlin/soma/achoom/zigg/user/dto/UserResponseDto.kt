@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 data class UserResponseDto(
     val userId: Long? = null,
     val userName: String?,
-    val userNickname: String?,
+    val userNickname: String? = null,
     val profileImageUrl: String?,
     val profileBannerImageUrl:String? = null,
     val userTags : String? = null,

@@ -79,8 +79,12 @@ jobs:
         uses: actions/checkout@v3
       - name: Delete tag if build or test fails
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RC_TAG: ${{ needs.build-and-deploy.outputs.rc_tag }}
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git tag -d "$RC_TAG"
-          git push origin :refs/tags/"$RC_TAG"
+            RC_TAG="${{ needs.build-and-deploy.outputs.rc_tag }}"
+            if [ -n "$RC_TAG" ]; then
+              git tag -d "$RC_TAG"
+              git push origin :refs/tags/"$RC_TAG"
+            else
+              echo "No tag to delete."
+            fi

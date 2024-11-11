@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*
 import soma.achoom.zigg.history.dto.UploadContentTypeRequestDto
 import soma.achoom.zigg.s3.service.S3DataType
 import soma.achoom.zigg.s3.service.S3Service
-import soma.achoom.zigg.space.dto.InviteRequestDto
+import soma.achoom.zigg.invite.dto.InviteRequestDto
 import soma.achoom.zigg.space.dto.SpaceReferenceUrlRequestDto
 import soma.achoom.zigg.space.dto.SpaceRequestDto
 import soma.achoom.zigg.space.dto.SpaceResponseDto
