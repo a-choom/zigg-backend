@@ -238,7 +238,6 @@ class PostService(
             postCreator = UserResponseDto(
                 userId = post.creator.userId,
                 userName = if (post.anonymous) "익명" else post.creator.name,
-                userNickname = post.creator.nickname,
                 profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey)
             ),
             isAnonymous = post.anonymous
@@ -269,7 +268,7 @@ class PostService(
                 profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey)
             ),
             isAnonymous = post.anonymous,
-            comments = commentRepository.findCommentsByPost(post).filter {
+            comments = comments.filter {
                 it.parentComment == null
             }.map {
                 CommentResponseDto(
