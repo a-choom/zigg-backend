@@ -114,18 +114,18 @@ class HistoryService @Autowired constructor(
                     feedbackMessage = feedback.message,
                     creatorId = SpaceUserResponseDto(
                         userId = feedback.creator.user?.userId,
-                        userName = feedback.creator.user?.name,
-                        userNickname = feedback.creator.user?.nickname,
-                        profileImageUrl = feedback.creator.user?.profileImageKey?.imageKey,
+                        userName = feedback.creator.user?.name ?: "알 수 없음",
+                        userNickname = feedback.creator.user?.nickname ?: "알 수 없음",
+                        profileImageUrl =  s3Service.getPreSignedGetUrl(feedback.creator.user?.profileImageKey?.imageKey),
                         spaceUserId = feedback.creator.spaceUserId,
                         spaceRole = feedback.creator.role,
                     ),
                     recipientId = feedback.recipients.map {
                         SpaceUserResponseDto(
                             userId = it.user?.userId,
-                            userName = it.user?.name,
-                            userNickname = it.user?.nickname,
-                            profileImageUrl = it.user?.profileImageKey?.imageKey,
+                            userName = it.user?.name ?: "알 수 없음",
+                            userNickname = it.user?.nickname ?: "알 수 없음",
+                            profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
                             spaceUserId = it.spaceUserId,
                             spaceRole = it.role,
                         )
