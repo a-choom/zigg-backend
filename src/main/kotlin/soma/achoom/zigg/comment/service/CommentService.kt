@@ -40,7 +40,7 @@ class CommentService(
 
         val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
 
-        val commentCreator =commentCreatorRepository.findCommentCreatorByPostAndUserAndAnonymous(post, user, commentRequestDto.anonymous) ?: CommentCreator(
+        val commentCreator = commentCreatorRepository.findCommentCreatorByPostAndUserAndAnonymous(post, user, commentRequestDto.anonymous) ?: CommentCreator(
             post = post,
             user = user,
             anonymous = commentRequestDto.anonymous,
@@ -60,9 +60,10 @@ class CommentService(
             commentCreator = UserResponseDto(
                 userId = user.userId,
                 userName = if(comment.creator.anonymous) comment.creator.anonymousName else user.name,
-                profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
+                profileImageUrl = if(comment.creator.anonymous) null else s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
             ),
             createdAt = comment.createAt,
+            isAnonymous = comment.creator.anonymous,
         )
     }
     @Transactional(readOnly = false)
@@ -97,7 +98,7 @@ class CommentService(
             commentCreator = UserResponseDto(
                 userId = user.userId,
                 userName = if(childComment.creator.anonymous) childComment.creator.anonymousName else user.name,
-                profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
+                profileImageUrl = if(childComment.creator.anonymous) null else s3Service.getPreSignedGetUrl(childComment.creator.user.profileImageKey.imageKey),
             ),
             parentComment = CommentResponseDto(
                 commentId = parentComment.commentId,
@@ -106,11 +107,13 @@ class CommentService(
                 commentCreator = UserResponseDto(
                     userId = parentComment.creator.user.userId,
                     userName = if(parentComment.creator.anonymous) parentComment.creator.anonymousName else parentComment.creator.user.name,
-                    profileImageUrl = s3Service.getPreSignedGetUrl(parentComment.creator.user.profileImageKey.imageKey),
+                    profileImageUrl = if(parentComment.creator.anonymous) null else s3Service.getPreSignedGetUrl(parentComment.creator.user.profileImageKey.imageKey),
                 ),
                 createdAt = parentComment.createAt,
+                isAnonymous = parentComment.creator.anonymous,
             ),
             createdAt = childComment.createAt,
+            isAnonymous = childComment.creator.anonymous,
         )
     }
     @Transactional(readOnly = false)
@@ -129,7 +132,7 @@ class CommentService(
             commentCreator = UserResponseDto(
                 userId = user.userId,
                 userName = if(comment.creator.anonymous) comment.creator.anonymousName else user.name,
-                profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
+                profileImageUrl = if (comment.creator.anonymous) null else s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
             ),
             parentComment = CommentResponseDto(
                 commentId = comment.commentId,
@@ -138,11 +141,13 @@ class CommentService(
                 commentCreator = UserResponseDto(
                     userId = comment.creator.user.userId,
                     userName = if(comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user.name,
-                    profileImageUrl = s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
+                    profileImageUrl = if (comment.creator.anonymous) null else s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
                 ),
                 createdAt = comment.createAt,
+                isAnonymous = comment.creator.anonymous,
             ),
             createdAt = comment.createAt,
+            isAnonymous = comment.creator.anonymous,
         )
     }
     @Transactional(readOnly = false)
@@ -174,9 +179,10 @@ class CommentService(
                 commentCreator = UserResponseDto(
                     userId = comment.creator.user.userId,
                     userName = if(comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user.name,
-                    profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
+                    profileImageUrl = if (comment.creator.anonymous) null else s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
                 ),
                 createdAt = comment.createAt,
+                isAnonymous = comment.creator.anonymous,
             )
         }
 
@@ -192,12 +198,10 @@ class CommentService(
             commentCreator = UserResponseDto(
                 userId = comment.creator.user.userId,
                 userName = if (comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user.name,
-                profileImageUrl = s3Service.getPreSignedGetUrl(user.profileImageKey.imageKey),
+                profileImageUrl = if (comment.creator.anonymous) null else s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
             ),
             createdAt = comment.createAt,
+            isAnonymous = comment.creator.anonymous,
         )
-
     }
-
-
 }

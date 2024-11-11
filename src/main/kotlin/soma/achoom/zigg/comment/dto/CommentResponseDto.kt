@@ -12,6 +12,7 @@ data class CommentResponseDto(
     val commentCreator : UserResponseDto,
     val createdAt: LocalDateTime,
     val parentComment:CommentResponseDto? = null,
-    val childComment:MutableList<CommentResponseDto>? = null
-) {
+    val childComment:MutableList<CommentResponseDto>? = null,
+    val isAnonymous: Boolean,
+    ) {
 }
