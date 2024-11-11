@@ -308,7 +308,6 @@ class SpaceService(
     fun deleteSpace(authentication: Authentication, spaceId: Long) {
         val user = userService.authenticationToUser(authentication)
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
-
         validateSpaceUser(user, space)
         spaceUserRepository.deleteAllBySpace(space)
         spaceRepository.delete(space)
