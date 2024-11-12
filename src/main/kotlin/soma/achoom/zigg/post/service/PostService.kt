@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 import soma.achoom.zigg.board.repository.BoardRepository
 import soma.achoom.zigg.comment.dto.CommentResponseDto
 import soma.achoom.zigg.comment.entity.Comment
+import soma.achoom.zigg.comment.entity.CommentType
 import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.content.dto.ImageResponseDto
 import soma.achoom.zigg.content.dto.VideoResponseDto
@@ -270,7 +271,7 @@ class PostService(
             ),
             isAnonymous = post.anonymous,
             comments = commentRepository.findCommentsByPost(post).filter {
-                it.parentComment == null
+                it.commentType == CommentType.COMMENT
             }.map {
                 CommentResponseDto(
                     commentId = it.commentId,

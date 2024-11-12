@@ -11,6 +11,7 @@ import soma.achoom.zigg.board.entity.Board
 import soma.achoom.zigg.board.repository.BoardRepository
 import soma.achoom.zigg.comment.entity.Comment
 import soma.achoom.zigg.comment.entity.CommentCreator
+import soma.achoom.zigg.comment.entity.CommentType
 import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.data.DummyDataUtil
 import soma.achoom.zigg.post.entity.Post
@@ -187,7 +188,8 @@ class PostRepositoryTest {
                 anonymous = false
             ),
             textComment = "comment",
-            post = post
+            post = post,
+            commentType = CommentType.COMMENT
         )
         val comment2 = Comment(
             creator = CommentCreator(
@@ -196,7 +198,8 @@ class PostRepositoryTest {
                 anonymous = false
             ),
             textComment = "comment",
-            post = post
+            post = post,
+            commentType = CommentType.REPLY
         )
         comment1.replies.add(comment2)
         postRepository.save(post)

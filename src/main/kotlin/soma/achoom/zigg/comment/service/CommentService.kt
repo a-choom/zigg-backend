@@ -10,6 +10,7 @@ import soma.achoom.zigg.comment.dto.CommentResponseDto
 import soma.achoom.zigg.comment.entity.Comment
 import soma.achoom.zigg.comment.entity.CommentCreator
 import soma.achoom.zigg.comment.entity.CommentLike
+import soma.achoom.zigg.comment.entity.CommentType
 import soma.achoom.zigg.comment.exception.AlreadyChildCommentException
 import soma.achoom.zigg.comment.exception.CommentNotFoundException
 import soma.achoom.zigg.comment.exception.CommentUserMissMatchException
@@ -51,6 +52,7 @@ class CommentService(
             creator = commentCreator,
             textComment = commentRequestDto.message,
             post = post,
+            commentType = CommentType.COMMENT
         )
         commentRepository.save(comment)
         return CommentResponseDto(
@@ -81,7 +83,7 @@ class CommentService(
         )
         val childComment = Comment(
             creator = commentCreator,
-            parentComment = parentComment,
+            commentType = CommentType.REPLY,
             textComment = commentRequestDto.message,
             post = post,
         )

@@ -1,6 +1,7 @@
 package soma.achoom.zigg.comment.entity
 
 import jakarta.persistence.*
+import soma.achoom.zigg.comment.listener.CommentEntityListener
 import soma.achoom.zigg.global.BaseEntity
 import soma.achoom.zigg.post.entity.Post
 
@@ -14,8 +15,9 @@ class Comment(
     @ManyToOne
     val post:Post,
 
-    @ManyToOne
-    val parentComment: Comment? = null,
+    @Enumerated(EnumType.STRING)
+    @Column(name = "comment_type")
+    val commentType: CommentType,
 
     @ManyToOne(cascade = [CascadeType.ALL])
     @JoinColumn(name = "creator")

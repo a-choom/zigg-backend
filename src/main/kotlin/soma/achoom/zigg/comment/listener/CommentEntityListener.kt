@@ -1,7 +1,4 @@
-package soma.achoom.zigg.comment.entity
-
-import jakarta.persistence.PrePersist
-import javax.annotation.PreDestroy
+package soma.achoom.zigg.comment.listener
 
 class CommentEntityListener {
 }

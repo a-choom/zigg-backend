@@ -183,7 +183,7 @@ class PostServiceTest {
         println(postResponse.postCreator.userName)
     }
     @Test
-    fun `create post with image`(){
+    fun `create post with comments`(){
         val user = dummyDataUtil.createDummyUser()
         val auth = dummyDataUtil.createDummyAuthentication(user)
         val postResponse = postService.createPost(
@@ -207,7 +207,6 @@ class PostServiceTest {
         commentService.createChildComment(commenter2Auth, board.boardId!!, postResponse.postId, commentResponse.commentId!!, CommentRequestDto("test comment"))
 
         val postWithComments = postService.getPost(auth, board.boardId!!, postResponse.postId)
-        println(postWithComments.comments?.size)
-        postWithComments.comments?.map { println(it)}
+        assert(postWithComments.comments?.size == 3)
     }
 }
