@@ -95,4 +95,9 @@ class PostController(
         val posts = postService.getCommentedPosts(authentication)
         return ResponseEntity.ok(posts)
     }
+    @GetMapping("/hottest")
+    fun getHottestPosts(authentication: Authentication) : ResponseEntity<List<PostResponseDto>>{
+        val posts = postService.getPopularPosts(authentication)
+        return ResponseEntity.ok(posts)
+    }
 }
