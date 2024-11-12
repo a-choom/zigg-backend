@@ -124,6 +124,9 @@ class PostService(
 
         post.title = postRequestDto.postTitle
         post.textContent = postRequestDto.postMessage
+
+
+
         post.imageContents = postRequestDto.postImageContent.map {
             Image.fromUrl(
                 uploader = post.creator, imageUrl = it
