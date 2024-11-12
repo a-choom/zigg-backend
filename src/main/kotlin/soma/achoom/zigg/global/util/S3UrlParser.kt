@@ -7,6 +7,7 @@ class S3UrlParser {
                 .split("/")
                 .subList(3, url.split("?")[0].split("/").size)
                 .joinToString("/")
+            println(imageKey)
             return imageKey
         }
     }

@@ -15,6 +15,7 @@ import soma.achoom.zigg.content.dto.ImageResponseDto
 import soma.achoom.zigg.content.dto.VideoResponseDto
 import soma.achoom.zigg.content.entity.Image
 import soma.achoom.zigg.content.entity.Video
+import soma.achoom.zigg.global.util.S3UrlParser
 import soma.achoom.zigg.history.repository.HistoryRepository
 import soma.achoom.zigg.post.dto.PostRequestDto
 import soma.achoom.zigg.post.dto.PostResponseDto
@@ -22,6 +23,7 @@ import soma.achoom.zigg.post.entity.Post
 import soma.achoom.zigg.post.entity.PostLike
 import soma.achoom.zigg.post.entity.PostScrap
 import soma.achoom.zigg.post.exception.PostCreatorMismatchException
+import soma.achoom.zigg.post.exception.PostImageContentMaximumException
 import soma.achoom.zigg.post.repository.PostLikeRepository
 import soma.achoom.zigg.post.repository.PostRepository
 import soma.achoom.zigg.post.repository.PostScrapRepository
@@ -42,15 +44,20 @@ class PostService(
     private val commentRepository: CommentRepository
 ) {
 
-    companion object{
+    companion object {
         private const val POST_PAGE_SIZE = 15
         private const val POST_BEST_SIZE = 2
+        private const val POST_IMAGE_MAX = 5
     }
 
     @Transactional(readOnly = false)
     fun createPost(authentication: Authentication, boardId: Long, postRequestDto: PostRequestDto): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
         val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
+
+        if(postRequestDto.postImageContent.size > POST_IMAGE_MAX) {
+            throw PostImageContentMaximumException(POST_IMAGE_MAX)
+        }
 
         val history = postRequestDto.historyId?.let {
             historyRepository.findHistoryByHistoryId(it)
@@ -111,7 +118,11 @@ class PostService(
         val user = userService.authenticationToUser(authentication)
         val sort = Sort.by(Sort.Order.desc("createAt"))
         val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
-        val posts = postRepository.findPostsByBoardAndTitleContaining(board, keyword, PageRequest.of(page, POST_PAGE_SIZE, sort))
+        val posts = postRepository.findPostsByBoardAndTitleContaining(
+            board,
+            keyword,
+            PageRequest.of(page, POST_PAGE_SIZE, sort)
+        )
         return posts.map {
             generatePostResponse(it, user)
         }.toList()
@@ -123,6 +134,10 @@ class PostService(
 
         val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
 
+        if (postRequestDto.postImageContent.size > POST_IMAGE_MAX) {
+            throw PostImageContentMaximumException(POST_IMAGE_MAX)
+        }
+
         if (post.creator.userId != user.userId) {
             throw PostCreatorMismatchException()
         }
@@ -130,25 +145,41 @@ class PostService(
         post.title = postRequestDto.postTitle
         post.textContent = postRequestDto.postMessage
 
-        post.imageContents = postRequestDto.postImageContent.map {
-            Image.fromUrl(
-                uploader = post.creator, imageUrl = it
-            )
-        }.toMutableList()
-        post.videoContent = postRequestDto.postVideoContent?.let {
-            Video.fromUrl(
-                uploader = post.creator, videoUrl = it.videoKey, duration = it.videoDuration
-            )
+        postRequestDto.postVideoContent?.let {
+            val extractedVideoKey = S3UrlParser.extractionKeyFromUrl(it.videoKey)
+            if (post.videoContent?.videoKey != extractedVideoKey) {
+                post.videoThumbnail = postRequestDto.postVideoThumbnail?.let { thumbnailUrl ->
+                    Image.fromUrl(uploader = post.creator, imageUrl = thumbnailUrl)
+                }
+                post.videoContent = Video.fromUrl(
+                    uploader = post.creator,
+                    videoUrl = extractedVideoKey,
+                    duration = it.videoDuration
+                )
+            }
+        } ?: run {
+            post.videoContent = null
+            post.videoThumbnail = null
         }
-        post.videoThumbnail = postRequestDto.postVideoThumbnail?.let {
-            Image.fromUrl(
-                uploader = post.creator, imageUrl = it
-            )
+
+        post.imageContents.removeIf { existingImage ->
+            existingImage.imageKey !in postRequestDto.postImageContent.map(S3UrlParser::extractionKeyFromUrl)
         }
+
+        postRequestDto.postImageContent.forEach { imageUrl ->
+            val imageKey = S3UrlParser.extractionKeyFromUrl(imageUrl)
+            if (post.imageContents.none { it.imageKey == imageKey }) {
+                post.imageContents.add(
+                    Image.fromUrl(uploader = post.creator, imageUrl = imageKey)
+                )
+            }
+        }
+
         postRepository.save(post)
         val comments = commentRepository.findCommentsByPost(post)
         return generatePostResponse(post, comments, user)
     }
+
 
     @Transactional(readOnly = false)
     fun deletePost(authentication: Authentication, postId: Long) {
@@ -239,10 +270,14 @@ class PostService(
             postMessage = post.textContent,
             postImageContents = post.imageContents.map { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
                 .toList(),
-            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey))} ?: post.imageContents.firstOrNull()?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
+            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
+                ?: post.imageContents.firstOrNull()
+                    ?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
+
             postVideoContent = post.videoContent?.let {
                 VideoResponseDto(
-                    videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey), videoDuration = it.duration
+                    videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey),
+                    videoDuration = it.duration
                 )
             },
             likeCnt = postLikeRepository.countPostLikesByPost(post),
@@ -267,10 +302,13 @@ class PostService(
             postMessage = post.textContent,
             postImageContents = post.imageContents.map { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
                 .toList(),
-            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) } ?: post.imageContents.firstOrNull()?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
+            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
+                ?: post.imageContents.firstOrNull()
+                    ?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
             postVideoContent = post.videoContent?.let {
                 VideoResponseDto(
-                    videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey), videoDuration = it.duration
+                    videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey),
+                    videoDuration = it.duration
                 )
             },
             likeCnt = postLikeRepository.countPostLikesByPost(post),
