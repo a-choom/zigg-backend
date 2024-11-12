@@ -50,7 +50,6 @@ class PostRepositoryTest {
         )
         for (i in 1..10) {
             val users = dummyDataUtil.createDummyUserList(i)
-
             postRepository.save(
                 Post(
                     creator = user,
@@ -58,7 +57,6 @@ class PostRepositoryTest {
                     textContent = "content$i",
                     board = board,
                     anonymous = false
-
                 )
             )
         }
@@ -66,10 +64,40 @@ class PostRepositoryTest {
     }
 
     @Test
-    fun `hottest post while 3 days`() {
+    fun `hottest post while 3 days with 0 likes posts`() {
         val posts = postRepository.findBestPosts(Pageable.ofSize(2))
-        assert(posts.size == 2)
-
+        assert(posts.isEmpty())
+        println(posts.size)
+    }
+    @Test
+    fun `hottest post while 3 days with 10+a likes posts`(){
+        val user = dummyDataUtil.createDummyUser()
+        val board = Board(
+            name = "test",
+        )
+        boardRepository.save(board)
+        val post = Post(
+            creator = user,
+            title = "title",
+            textContent = "content",
+            board = board,
+            anonymous = false
+        )
+        postRepository.save(post)
+        for (i in 1..10) {
+            val users = dummyDataUtil.createDummyUserList(i)
+            postLikeRepository.saveAll(
+                users.map {
+                    PostLike(
+                        user = it,
+                        post = post
+                    )
+                }
+            )
+        }
+        val posts = postRepository.findBestPosts(Pageable.ofSize(2))
+        assert(posts.size == 1)
+        println(posts.size)
     }
 
     @Test

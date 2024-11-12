@@ -3,7 +3,6 @@ package soma.achoom.zigg.comment.entity
 import jakarta.persistence.*
 import soma.achoom.zigg.global.BaseEntity
 import soma.achoom.zigg.post.entity.Post
-import soma.achoom.zigg.user.entity.User
 
 @Entity(name = "comment")
 @EntityListeners(CommentEntityListener::class)
