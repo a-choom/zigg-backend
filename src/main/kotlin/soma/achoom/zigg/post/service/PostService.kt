@@ -1,6 +1,7 @@
 package soma.achoom.zigg.post.service
 
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
@@ -40,6 +41,12 @@ class PostService(
     private val s3Service: S3Service,
     private val commentRepository: CommentRepository
 ) {
+
+    companion object{
+        private const val POST_PAGE_SIZE = 15
+        private const val POST_BEST_SIZE = 2
+    }
+
     @Transactional(readOnly = false)
     fun createPost(authentication: Authentication, boardId: Long, postRequestDto: PostRequestDto): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
@@ -79,7 +86,7 @@ class PostService(
         val user = userService.authenticationToUser(authentication)
         val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
         val sort = Sort.by(Sort.Order.desc("createAt"))
-        val posts = postRepository.findPostsByBoard(board, PageRequest.of(page, 15, sort))
+        val posts = postRepository.findPostsByBoard(board, PageRequest.of(page, POST_PAGE_SIZE, sort))
         return posts.map {
             generatePostResponse(it, user)
         }.toList()
@@ -90,10 +97,8 @@ class PostService(
     fun getPost(authentication: Authentication, boardId: Long, postId: Long): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
         val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
-
         val comments = commentRepository.findCommentsByPost(post)
         return generatePostResponse(post, comments, user)
-
     }
 
     @Transactional(readOnly = true)
@@ -106,7 +111,7 @@ class PostService(
         val user = userService.authenticationToUser(authentication)
         val sort = Sort.by(Sort.Order.desc("createAt"))
         val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
-        val posts = postRepository.findPostsByBoardAndTitleContaining(board, keyword, PageRequest.of(page, 10, sort))
+        val posts = postRepository.findPostsByBoardAndTitleContaining(board, keyword, PageRequest.of(page, POST_PAGE_SIZE, sort))
         return posts.map {
             generatePostResponse(it, user)
         }.toList()
@@ -124,8 +129,6 @@ class PostService(
 
         post.title = postRequestDto.postTitle
         post.textContent = postRequestDto.postMessage
-
-
 
         post.imageContents = postRequestDto.postImageContent.map {
             Image.fromUrl(
@@ -218,6 +221,15 @@ class PostService(
         return post.map {
             generatePostResponse(it, user)
         }.toSet().toList()
+    }
+
+    @Transactional(readOnly = true)
+    fun getPopularPosts(authentication: Authentication): List<PostResponseDto> {
+        val user = userService.authenticationToUser(authentication)
+        val posts = postRepository.findBestPosts(Pageable.ofSize(POST_BEST_SIZE))
+        return posts.map {
+            generatePostResponse(it, user)
+        }.toList()
     }
 
 
