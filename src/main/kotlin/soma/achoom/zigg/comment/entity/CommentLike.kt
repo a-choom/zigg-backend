@@ -1,6 +1,7 @@
 package soma.achoom.zigg.comment.entity
 
 import jakarta.persistence.*
+import soma.achoom.zigg.comment.listener.CommentLikeEntityListener
 import soma.achoom.zigg.global.BaseEntity
 import soma.achoom.zigg.user.entity.User
 

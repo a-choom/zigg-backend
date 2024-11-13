@@ -183,7 +183,7 @@ class PostServiceTest {
         println(postResponse.postCreator.userName)
     }
     @Test
-    fun `create post with image`(){
+    fun `create post with comments`(){
         val user = dummyDataUtil.createDummyUser()
         val auth = dummyDataUtil.createDummyAuthentication(user)
         val postResponse = postService.createPost(

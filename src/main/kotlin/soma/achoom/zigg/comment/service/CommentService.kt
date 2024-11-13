@@ -10,6 +10,7 @@ import soma.achoom.zigg.comment.dto.CommentResponseDto
 import soma.achoom.zigg.comment.entity.Comment
 import soma.achoom.zigg.comment.entity.CommentCreator
 import soma.achoom.zigg.comment.entity.CommentLike
+import soma.achoom.zigg.comment.entity.CommentType
 import soma.achoom.zigg.comment.exception.AlreadyChildCommentException
 import soma.achoom.zigg.comment.exception.CommentNotFoundException
 import soma.achoom.zigg.comment.exception.CommentUserMissMatchException
@@ -51,6 +52,7 @@ class CommentService(
             creator = commentCreator,
             textComment = commentRequestDto.message,
             post = post,
+            commentType = CommentType.COMMENT
         )
         commentRepository.save(comment)
         return CommentResponseDto(
@@ -72,18 +74,16 @@ class CommentService(
         val board = boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
         val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
         val parentComment = commentRepository.findById(commentId).orElseThrow { CommentNotFoundException() }
-        if(parentComment.parentComment != null){
-            throw AlreadyChildCommentException()
-        }
-        val commentCreator =commentCreatorRepository.findCommentCreatorByPostAndUserAndAnonymous(post, user, commentRequestDto.anonymous) ?: CommentCreator(
+
+        val commentCreator = commentCreatorRepository.findCommentCreatorByPostAndUserAndAnonymous(post, user, commentRequestDto.anonymous) ?: CommentCreator(
             post = post,
             user = user,
             anonymous = commentRequestDto.anonymous,
             anonymousName = if(post.creator == user) "글쓴이(익명)" else if(commentRequestDto.anonymous) "익명 " + (commentCreatorRepository.countAnonymousInPost(post) + 1).toString() else null
         )
         val childComment = Comment(
-            parentComment = parentComment,
             creator = commentCreator,
+            commentType = CommentType.REPLY,
             textComment = commentRequestDto.message,
             post = post,
         )
