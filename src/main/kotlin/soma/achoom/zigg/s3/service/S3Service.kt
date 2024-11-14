@@ -26,9 +26,17 @@ class S3Service(
     }
     @Transactional(readOnly = true)
     fun getPreSignedPutUrl(objectType:S3DataType, id: UUID, uploadContentTypeRequestDto: UploadContentTypeRequestDto): String {
-        val objectName = objectType.path+id.toString()+"."+uploadContentTypeRequestDto.fileExtension
+        val objectName = objectType.path + id.toString()+"."+uploadContentTypeRequestDto.fileExtension
         return amazonS3Client.generatePresignedUrl(bucket, objectName, DateTime.now().plusMinutes(10).toDate(),HttpMethod.PUT).toString()
     }
+
+    @Transactional(readOnly = true)
+    fun uploadJsonDataToS3(objectType: S3DataType, jsonData: String) : String {
+        val key = objectType.path + UUID.randomUUID().toString()+".json"
+        amazonS3Client.putObject(bucket, key, jsonData)
+        return key
+    }
+
     @Transactional(readOnly = true)
     fun generateS3ContentEndpoint(authentication: Authentication, uploadContentTypeRequestDto: UploadContentTypeRequestDto,type: String) {
         when (type) {

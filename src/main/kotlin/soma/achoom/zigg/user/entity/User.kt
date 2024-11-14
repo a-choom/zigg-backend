@@ -34,7 +34,7 @@ class User(
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role")
-    var role: UserRole = UserRole.USER,
+    val role: UserRole = UserRole.USER,
 
     @ManyToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var profileImageKey: Image,

@@ -8,7 +8,10 @@ enum class S3DataType(val path:String) {
     USER_PROFILE_IMAGE("profile/"),
     POST_IMAGE("image/post/"),
     POST_VIDEO("video/post/"),
-    POST_THUMBNAIL("thumbnail/post/");
+    POST_THUMBNAIL("thumbnail/post/"),
+    POST_REPORT("report/post/"),
+    COMMENT_REPORT("report/comment/"),
+    USER_REPORT("report/user/");
 
     fun getBucketName():String{
         return path

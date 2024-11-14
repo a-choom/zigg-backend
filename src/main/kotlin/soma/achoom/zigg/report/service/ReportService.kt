@@ -1,4 +1,10 @@
 package soma.achoom.zigg.report.service
 
-class ReportService {
+import org.springframework.stereotype.Service
+
+@Service
+class ReportService(
+
+) {
+
 }

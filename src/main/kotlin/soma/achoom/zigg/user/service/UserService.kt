@@ -83,7 +83,6 @@ class UserService(
     @Transactional(readOnly = false)
     fun updateUser(authentication: Authentication, userRequestDto: UserRequestDto): UserResponseDto {
         val user = authenticationToUser(authentication)
-        checkGuestUserUpdateProfileLimit(user)
         user.name = userRequestDto.userName
         user.description = userRequestDto.userDescription
         user.tags = userRequestDto.userTags
@@ -158,11 +157,5 @@ class UserService(
     fun registerToken(authentication: Authentication, token: FCMTokenRequestDto) {
         val user = authenticationToUser(authentication)
         fcmService.registerToken(user,token)
-    }
-
-    private fun checkGuestUserUpdateProfileLimit(user: User) {
-        if (user.role == UserRole.GUEST){
-            throw GuestUserUpdateProfileLimitationException()
-        }
     }
 }

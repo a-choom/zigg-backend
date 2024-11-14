@@ -21,7 +21,6 @@ class JwtTokenProvider {
     private val key by lazy { Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey)) }
 
     fun createTokenWithUserInfo(user: User): String {
-
         val userId = user.providerId
         val authorities = user.role
 

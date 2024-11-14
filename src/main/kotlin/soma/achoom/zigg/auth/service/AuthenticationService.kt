@@ -41,6 +41,7 @@ class AuthenticationService @Autowired constructor(
     fun checkNickname(nicknameRequestDto:NicknameValidRequestDto): NicknameValidResponseDto {
         return NicknameValidResponseDto(userRepository.existsUserByNickname(nicknameRequestDto.nickname))
     }
+    @Transactional(readOnly = false)
     fun generateJWTToken(oAuth2UserRequestDto: OAuth2UserRequestDto): HttpHeaders {
         val user = userRepository.findUserByPlatformAndProviderId(
             OAuthProviderEnum.valueOf(oAuth2UserRequestDto.platform), oAuth2UserRequestDto.providerId
@@ -167,10 +168,6 @@ class AuthenticationService @Autowired constructor(
                 jwtToken = "",
                 profileImageKey = image,
             )
-        }
-
-        if(user.platform == OAuthProviderEnum.GUEST){
-            user.role = UserRole.GUEST
         }
 
         return userRepository.save(user)
