@@ -35,9 +35,9 @@ class CommentService(
 ){
 
     @Transactional(readOnly = false)
-    fun createComment(authentication: Authentication,boardId:Long, postId:Long, commentRequestDto : CommentRequestDto) : CommentResponseDto{
+    fun createComment(authentication: Authentication,boardId:Long, postId:Long, commentRequestDto : CommentRequestDto) : List<CommentResponseDto>{
         val user = userService.authenticationToUser(authentication)
-        val board = boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
+        boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
 
         val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
 
@@ -55,23 +55,25 @@ class CommentService(
             commentType = CommentType.COMMENT
         )
         commentRepository.save(comment)
-        return CommentResponseDto(
-            commentId = comment.commentId,
-            commentLike = comment.likes,
-            commentMessage = comment.textComment,
-            commentCreator = UserResponseDto(
-                userId = user.userId,
-                userName = if(comment.creator.anonymous) comment.creator.anonymousName else user.name,
-                profileImageUrl = if(comment.creator.anonymous) null else s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
-            ),
-            createdAt = comment.createAt,
-            isAnonymous = comment.creator.anonymous,
-        )
+        return commentRepository.findCommentsByPost(post).map{
+            CommentResponseDto(
+                commentId = it.commentId,
+                commentLike = it.likes,
+                commentMessage = it.textComment,
+                commentCreator = UserResponseDto(
+                    userId = it.creator.user.userId,
+                    userName = if(it.creator.anonymous) it.creator.anonymousName else user.name,
+                    profileImageUrl = if(it.creator.anonymous) null else s3Service.getPreSignedGetUrl(it.creator.user.profileImageKey.imageKey),
+                ),
+                createdAt = it.createAt,
+                isAnonymous = it.creator.anonymous,
+            )
+        }
     }
     @Transactional(readOnly = false)
-    fun createChildComment(authentication: Authentication,boardId:Long, postId:Long,commentId: Long, commentRequestDto: CommentRequestDto) : CommentResponseDto{
+    fun createChildComment(authentication: Authentication,boardId:Long, postId:Long,commentId: Long, commentRequestDto: CommentRequestDto) : List<CommentResponseDto>{
         val user = userService.authenticationToUser(authentication)
-        val board = boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
+        boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
         val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
         val parentComment = commentRepository.findById(commentId).orElseThrow { CommentNotFoundException() }
 
@@ -91,68 +93,55 @@ class CommentService(
         parentComment.replies.add(childComment)
         commentRepository.save(parentComment)
 
-        return CommentResponseDto(
-            commentId = childComment.commentId,
-            commentLike = childComment.likes,
-            commentMessage = childComment.textComment,
-            commentCreator = UserResponseDto(
-                userId = user.userId,
-                userName = if(childComment.creator.anonymous) childComment.creator.anonymousName else user.name,
-                profileImageUrl = if(childComment.creator.anonymous) null else s3Service.getPreSignedGetUrl(childComment.creator.user.profileImageKey.imageKey),
-            ),
-            parentComment = CommentResponseDto(
-                commentId = parentComment.commentId,
-                commentLike = parentComment.likes,
-                commentMessage = parentComment.textComment,
+
+        return commentRepository.findCommentsByPost(post).map{
+            CommentResponseDto(
+                commentId = it.commentId,
+                commentLike = it.likes,
+                commentMessage = it.textComment,
                 commentCreator = UserResponseDto(
-                    userId = parentComment.creator.user.userId,
-                    userName = if(parentComment.creator.anonymous) parentComment.creator.anonymousName else parentComment.creator.user.name,
-                    profileImageUrl = if(parentComment.creator.anonymous) null else s3Service.getPreSignedGetUrl(parentComment.creator.user.profileImageKey.imageKey),
+                    userId = it.creator.user.userId,
+                    userName = if(it.creator.anonymous) it.creator.anonymousName else user.name,
+                    profileImageUrl = if(it.creator.anonymous) null else s3Service.getPreSignedGetUrl(it.creator.user.profileImageKey.imageKey),
                 ),
-                createdAt = parentComment.createAt,
-                isAnonymous = parentComment.creator.anonymous,
-            ),
-            createdAt = childComment.createAt,
-            isAnonymous = childComment.creator.anonymous,
-        )
+                createdAt = it.createAt,
+                isAnonymous = it.creator.anonymous,
+            )
+        }
     }
     @Transactional(readOnly = false)
-    fun updateComment(authentication: Authentication,commentId:Long, commentRequestDto: CommentRequestDto) : CommentResponseDto{
+    fun updateComment(authentication: Authentication,boardId: Long, postId:Long,commentId:Long, commentRequestDto: CommentRequestDto) : List<CommentResponseDto>{
         val user = userService.authenticationToUser(authentication)
+
         val comment = commentRepository.findById(commentId).orElseThrow { CommentNotFoundException() }
+        val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
+        boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
+
         if(comment.creator != user){
             throw CommentUserMissMatchException()
         }
         comment.textComment = commentRequestDto.message
         commentRepository.save(comment)
-        return CommentResponseDto(
-            commentId = comment.commentId,
-            commentLike = comment.likes,
-            commentMessage = comment.textComment,
-            commentCreator = UserResponseDto(
-                userId = user.userId,
-                userName = if(comment.creator.anonymous) comment.creator.anonymousName else user.name,
-                profileImageUrl = if (comment.creator.anonymous) null else s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
-            ),
-            parentComment = CommentResponseDto(
-                commentId = comment.commentId,
-                commentLike = comment.likes,
-                commentMessage = comment.textComment,
+
+        return commentRepository.findCommentsByPost(post).map{
+            CommentResponseDto(
+                commentId = it.commentId,
+                commentLike = it.likes,
+                commentMessage = it.textComment,
                 commentCreator = UserResponseDto(
-                    userId = comment.creator.user.userId,
-                    userName = if(comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user.name,
-                    profileImageUrl = if (comment.creator.anonymous) null else s3Service.getPreSignedGetUrl(comment.creator.user.profileImageKey.imageKey),
+                    userId = it.creator.user.userId,
+                    userName = if(it.creator.anonymous) it.creator.anonymousName else user.name,
+                    profileImageUrl = if(it.creator.anonymous) null else s3Service.getPreSignedGetUrl(it.creator.user.profileImageKey.imageKey),
                 ),
-                createdAt = comment.createAt,
-                isAnonymous = comment.creator.anonymous,
-            ),
-            createdAt = comment.createAt,
-            isAnonymous = comment.creator.anonymous,
-        )
+                createdAt = it.createAt,
+                isAnonymous = it.creator.anonymous,
+            )
+        }
     }
     @Transactional(readOnly = false)
-    fun deleteComment(authentication: Authentication,boardId: Long, postId: Long, commentId: Long) {
+    fun deleteComment(authentication: Authentication,boardId: Long, postId: Long, commentId: Long) : List<CommentResponseDto> {
         val user = userService.authenticationToUser(authentication)
+        boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
         val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
         val comment = commentRepository.findById(commentId).orElseThrow { CommentNotFoundException() }
         if(comment.creator.user != user){
@@ -163,11 +152,26 @@ class CommentService(
         comment.creator.anonymousName = "알 수 없음."
         comment.textComment = "삭제된 댓글입니다."
         commentRepository.save(comment)
+        return commentRepository.findCommentsByPost(post).map{
+            CommentResponseDto(
+                commentId = it.commentId,
+                commentLike = it.likes,
+                commentMessage = it.textComment,
+                commentCreator = UserResponseDto(
+                    userId = it.creator.user.userId,
+                    userName = if(it.creator.anonymous) it.creator.anonymousName else user.name,
+                    profileImageUrl = if(it.creator.anonymous) null else s3Service.getPreSignedGetUrl(it.creator.user.profileImageKey.imageKey),
+                ),
+                createdAt = it.createAt,
+                isAnonymous = it.creator.anonymous,
+            )
+        }
     }
     @Transactional(readOnly = false)
     fun likeOrUnlikeComment(authentication: Authentication, boardId:Long, postId:Long, commentId: Long) : CommentResponseDto{
         val user = userService.authenticationToUser(authentication)
-        val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
+        boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
+        postRepository.findById(postId).orElseThrow { PostNotFoundException() }
         val comment = commentRepository.findById(commentId).orElseThrow { CommentNotFoundException() }
 
         commentLikeRepository.findCommentLikeByCommentAndUser(comment, user)?.let {

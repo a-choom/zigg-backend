@@ -25,7 +25,7 @@ class CommentController(
         @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @RequestBody commentRequestDto: CommentRequestDto
-    ): ResponseEntity<CommentResponseDto> {
+    ): ResponseEntity<List<CommentResponseDto>> {
         val comment = commentService.createComment(authentication, boardId, postId, commentRequestDto)
         return ResponseEntity.ok(comment)
     }
@@ -36,7 +36,7 @@ class CommentController(
         @PathVariable postId: Long,
         @PathVariable commentId: Long,
         @RequestBody commentRequestDto: CommentRequestDto
-    ): ResponseEntity<CommentResponseDto> {
+    ): ResponseEntity<List<CommentResponseDto>> {
         val comment = commentService.createChildComment(authentication, boardId, postId, commentId, commentRequestDto)
         return ResponseEntity.ok(comment)
     }
@@ -47,8 +47,8 @@ class CommentController(
         @PathVariable postId: Long,
         @PathVariable commentId: Long,
         @RequestBody commentRequestDto: CommentRequestDto
-    ): ResponseEntity<CommentResponseDto> {
-        val comment = commentService.updateComment(authentication, commentId, commentRequestDto)
+    ): ResponseEntity<List<CommentResponseDto>> {
+        val comment = commentService.updateComment(authentication, boardId,postId,commentId, commentRequestDto)
         return ResponseEntity.ok(comment)
     }
 
@@ -58,9 +58,9 @@ class CommentController(
         @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @PathVariable commentId: Long
-    ): ResponseEntity<Void> {
-        commentService.deleteComment(authentication, boardId,postId,commentId)
-        return ResponseEntity.noContent().build()
+    ): ResponseEntity<List<CommentResponseDto>> {
+        val comment = commentService.deleteComment(authentication, boardId,postId,commentId)
+        return ResponseEntity.ok(comment)
     }
     @GetMapping("likes/{boardId}/{postId}/{commentId}")
     fun getCommentLikes(
