@@ -1,7 +1,8 @@
-package soma.achoom.zigg.comment.entity
+package soma.achoom.zigg.comment.listener
 
 import jakarta.persistence.PrePersist
 import jakarta.persistence.PreRemove
+import soma.achoom.zigg.comment.entity.CommentLike
 
 class CommentLikeEntityListener {
     @PrePersist
