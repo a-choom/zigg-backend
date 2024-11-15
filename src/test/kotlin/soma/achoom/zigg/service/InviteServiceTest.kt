@@ -6,20 +6,15 @@ import org.springframework.boot.autoconfigure.domain.EntityScan
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
-import soma.achoom.zigg.TestConfig
 import soma.achoom.zigg.data.DummyDataUtil
 import soma.achoom.zigg.invite.service.InviteService
-import soma.achoom.zigg.space.dto.InviteRequestDto
-import soma.achoom.zigg.space.dto.SpaceUserRequestDto
 import soma.achoom.zigg.space.entity.Space
-import soma.achoom.zigg.space.entity.SpaceRole
 import soma.achoom.zigg.space.entity.SpaceUser
 import soma.achoom.zigg.space.repository.SpaceRepository
 import soma.achoom.zigg.space.repository.SpaceUserRepository
 import soma.achoom.zigg.space.service.SpaceService
 import soma.achoom.zigg.user.entity.User
 import soma.achoom.zigg.user.repository.UserRepository
-import kotlin.test.Test
 
 @SpringBootTest
 @EntityScan("soma.achoom.zigg.*")

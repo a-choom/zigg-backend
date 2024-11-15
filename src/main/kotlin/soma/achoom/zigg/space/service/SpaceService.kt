@@ -10,24 +10,19 @@ import soma.achoom.zigg.content.repository.ImageRepository
 import soma.achoom.zigg.firebase.dto.FCMEvent
 import soma.achoom.zigg.firebase.service.FCMService
 import soma.achoom.zigg.history.dto.HistoryResponseDto
-import soma.achoom.zigg.invite.dto.InviteResponseDto
+import soma.achoom.zigg.invite.dto.InviteRequestDto
 import soma.achoom.zigg.invite.entity.InviteStatus
 import soma.achoom.zigg.invite.entity.Invite
 import soma.achoom.zigg.invite.repository.InviteRepository
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.space.dto.*
 import soma.achoom.zigg.space.entity.*
-import soma.achoom.zigg.space.exception.GuestSpaceCreateLimitationException
 import soma.achoom.zigg.space.exception.SpaceNotFoundException
 import soma.achoom.zigg.space.repository.SpaceRepository
 import soma.achoom.zigg.space.exception.SpaceUserNotFoundInSpaceException
 import soma.achoom.zigg.space.repository.SpaceUserRepository
-import soma.achoom.zigg.user.dto.UserResponseDto
 import soma.achoom.zigg.user.entity.User
-import soma.achoom.zigg.user.entity.UserRole
-import soma.achoom.zigg.user.repository.UserRepository
 import soma.achoom.zigg.user.service.UserService
-import java.util.UUID
 
 
 @Service
@@ -89,11 +84,11 @@ class SpaceService(
             spaceUsers = spaceUserRepository.findSpaceUserBySpace(space).filter { it.withdraw.not() }.map {
                 SpaceUserResponseDto(
                     userId = it.user?.userId,
-                    userNickname = it.user?.nickname,
+                    userNickname = it.user?.nickname ?: "알 수 없음",
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
-                    userName = it.user?.name
+                    userName = it.user?.name ?: "알 수 없음"
                 )
             }.toMutableSet(),
             createdAt = space.createAt,
@@ -167,11 +162,11 @@ class SpaceService(
             spaceUsers = spaceUserRepository.findSpaceUserBySpace(space).filter { it.withdraw.not() }.map {
                 SpaceUserResponseDto(
                     userId = it.user?.userId,
-                    userNickname = it.user?.nickname,
+                    userNickname = it.user?.nickname ?: "알 수 없음",
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
-                    userName = it.user?.name
+                    userName = it.user?.name ?: "알 수 없음"
                 )
             }.toMutableSet(),
             createdAt = space.createAt,
@@ -205,11 +200,11 @@ class SpaceService(
                 spaceUsers = spaceUserRepository.findSpaceUserBySpace(it).filter { it.withdraw.not() }.map {
                     SpaceUserResponseDto(
                         userId = it.user?.userId,
-                        userNickname = it.user?.nickname,
+                        userNickname = it.user?.nickname ?: "알 수 없음",
                         spaceUserId = it.spaceUserId,
                         spaceRole = it.role,
                         profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
-                        userName = it.user?.name
+                        userName = it.user?.name ?: "알 수 없음"
                     )
                 }.toMutableSet(),
                 createdAt = it.createAt,
@@ -233,11 +228,11 @@ class SpaceService(
             spaceUsers = spaceUserRepository.findSpaceUserBySpace(space).filter { it.withdraw.not() }.map {
                 SpaceUserResponseDto(
                     userId = it.user?.userId,
-                    userNickname = it.user?.nickname,
+                    userNickname = it.user?.nickname ?: "알 수 없음",
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
-                    userName = it.user?.name
+                    userName = it.user?.name ?: "알 수 없음"
                 )
             }.toMutableSet(),
             history = space.histories.map {
@@ -286,11 +281,11 @@ class SpaceService(
             spaceUsers = spaceUserRepository.findSpaceUserBySpace(space).filter { it.withdraw.not() }.map {
                 SpaceUserResponseDto(
                     userId = it.user?.userId,
-                    userNickname = it.user?.nickname,
+                    userNickname = it.user?.nickname ?: "알 수 없음",
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
-                    userName = it.user?.name
+                    userName = it.user?.name ?: "알 수 없음"
                 )
             }.toMutableSet(),
             history = space.histories.map {
@@ -313,7 +308,6 @@ class SpaceService(
     fun deleteSpace(authentication: Authentication, spaceId: Long) {
         val user = userService.authenticationToUser(authentication)
         val space = spaceRepository.findSpaceBySpaceId(spaceId) ?: throw SpaceNotFoundException()
-
         validateSpaceUser(user, space)
         spaceUserRepository.deleteAllBySpace(space)
         spaceRepository.delete(space)
@@ -337,11 +331,11 @@ class SpaceService(
             spaceUsers = spaceUserRepository.findSpaceUserBySpace(space).filter { it.withdraw.not() }.map {
                 SpaceUserResponseDto(
                     userId = it.user?.userId,
-                    userNickname = it.user?.nickname,
+                    userNickname = it.user?.nickname ?: "알 수 없음",
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
-                    userName = it.user?.name
+                    userName = it.user?.name ?: "알 수 없음"
                 )
             }.toMutableSet(),
             history = space.histories.map {
@@ -376,11 +370,11 @@ class SpaceService(
             spaceUsers = spaceUserRepository.findSpaceUserBySpace(space).filter { it.withdraw.not() }.map {
                 SpaceUserResponseDto(
                     userId = it.user?.userId,
-                    userNickname = it.user?.nickname,
+                    userNickname = it.user?.nickname ?: "알 수 없음",
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
-                    userName = it.user?.name
+                    userName = it.user?.name ?: "알 수 없음"
                 )
             }.toMutableSet(),
             history = space.histories.map {
@@ -407,5 +401,4 @@ class SpaceService(
         }
         throw SpaceUserNotFoundInSpaceException()
     }
-
 }
