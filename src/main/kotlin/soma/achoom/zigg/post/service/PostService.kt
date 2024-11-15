@@ -7,6 +7,7 @@ import org.springframework.data.domain.Sort
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import soma.achoom.zigg.board.exception.BoardNotFoundException
 import soma.achoom.zigg.board.repository.BoardRepository
 import soma.achoom.zigg.comment.dto.CommentResponseDto
 import soma.achoom.zigg.comment.entity.Comment
@@ -105,7 +106,7 @@ class PostService(
     @Transactional(readOnly = true)
     fun getPost(authentication: Authentication, boardId: Long, postId: Long): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
-        val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
+        val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
         val comments = commentRepository.findCommentsByPost(post)
         return generatePostResponse(post, comments, user)
     }
@@ -119,7 +120,7 @@ class PostService(
     ): List<PostResponseDto> {
         val user = userService.authenticationToUser(authentication)
         val sort = Sort.by(Sort.Order.desc("createAt"))
-        val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
+        val board = boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
         val posts = postRepository.findPostsByBoardAndTitleContaining(
             board,
             keyword,
@@ -134,7 +135,7 @@ class PostService(
     fun updatePost(authentication: Authentication, postId: Long, postRequestDto: PostRequestDto): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
 
-        val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
+        val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
 
         if (postRequestDto.postImageContent.size > POST_IMAGE_MAX) {
             throw PostImageContentMaximumException(POST_IMAGE_MAX)
@@ -186,7 +187,7 @@ class PostService(
     @Transactional(readOnly = false)
     fun deletePost(authentication: Authentication, postId: Long) {
         val user = userService.authenticationToUser(authentication)
-        val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
+        val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
         if (post.creator?.userId != user.userId) {
             throw PostCreatorMismatchException()
         }
@@ -226,19 +227,6 @@ class PostService(
         postRepository.save(post)
         return generatePostResponse(post,user)
 
-    }
-
-    @Transactional(readOnly = false)
-    fun scrapOrUnscrapPost(authentication: Authentication, postId: Long): PostResponseDto {
-        val user = userService.authenticationToUser(authentication)
-        val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
-        val postScrap = postScrapRepository.findByPostAndUser(post, user)
-        if (postScrap == null) {
-            postScrapRepository.save(PostScrap(user = user, post = post))
-        } else {
-            postScrapRepository.delete(postScrap)
-        }
-        return generatePostResponse(post, user)
     }
 
 

@@ -112,9 +112,9 @@ class PostServiceTest {
     fun `scrap unscrap post`() {
         val user = dummyDataUtil.createDummyUser()
         val auth = dummyDataUtil.createDummyAuthentication(user)
-        postService.scrapOrUnscrapPost(auth, post.postId!!)
+        postService.scrapPost(auth,board.boardId!!, post.postId!!)
 
-        postService.scrapOrUnscrapPost(auth, post.postId!!)
+        postService.unScrapPost(auth, board.boardId!!,post.postId!!)
     }
     @Test
     fun `get post`(){
@@ -127,7 +127,7 @@ class PostServiceTest {
     fun `get scraps`(){
         val user = dummyDataUtil.createDummyUser()
         val auth = dummyDataUtil.createDummyAuthentication(user)
-        postService.scrapOrUnscrapPost(auth, post.postId!!)
+        postService.scrapPost(auth,board.boardId!!, post.postId!!)
         val scraps = postService.getScrapedPosts(auth)
         assert(scraps[0].postId == post.postId)
     }
