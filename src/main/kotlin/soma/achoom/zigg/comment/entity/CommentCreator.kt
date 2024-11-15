@@ -12,7 +12,7 @@ class CommentCreator(
     val id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    val user : User,
+    var user : User?,
 
     @ManyToOne(fetch = FetchType.LAZY)
     val post: Post,
@@ -22,7 +22,4 @@ class CommentCreator(
 
     var anonymousName : String? = null
 
-) : BaseEntity(){
-
-
-}
+) : BaseEntity()

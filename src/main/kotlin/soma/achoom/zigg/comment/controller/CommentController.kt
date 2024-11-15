@@ -63,13 +63,23 @@ class CommentController(
         return ResponseEntity.ok(comment)
     }
     @GetMapping("likes/{boardId}/{postId}/{commentId}")
-    fun getCommentLikes(
+    fun likeComment(
         authentication: Authentication,
         @PathVariable boardId: Long,
         @PathVariable postId: Long,
         @PathVariable commentId: Long
     ): ResponseEntity<CommentResponseDto> {
-        val commentLikes = commentService.likeOrUnlikeComment(authentication,boardId, postId, commentId)
+        val commentLikes = commentService.likeComment(authentication,boardId, postId, commentId)
+        return ResponseEntity.ok(commentLikes)
+    }
+    @DeleteMapping("likes/{boardId}/{postId}/{commentId}")
+    fun unlikeComment(
+        authentication: Authentication,
+        @PathVariable boardId: Long,
+        @PathVariable postId: Long,
+        @PathVariable commentId: Long
+    ): ResponseEntity<CommentResponseDto> {
+        val commentLikes = commentService.unlikeComment(authentication,boardId, postId, commentId)
         return ResponseEntity.ok(commentLikes)
     }
 }

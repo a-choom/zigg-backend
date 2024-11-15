@@ -72,12 +72,22 @@ class PostController(
     }
     @GetMapping("/likes/{boardId}/{postId}")
     fun likePost(authentication: Authentication, @PathVariable boardId : Long,@PathVariable postId: Long) : ResponseEntity<PostResponseDto>{
-        val post = postService.likeOrUnlikePost(authentication, postId)
+        val post = postService.likePost(authentication,boardId, postId)
+        return ResponseEntity.ok(post)
+    }
+    @DeleteMapping("/likes/{boardId}/{postId}")
+    fun unlikePost(authentication: Authentication, @PathVariable boardId : Long,@PathVariable postId: Long) : ResponseEntity<PostResponseDto>{
+        val post = postService.unlikePost(authentication,boardId, postId)
         return ResponseEntity.ok(post)
     }
     @GetMapping("/scraps/{boardId}/{postId}")
     fun scrapPost(authentication: Authentication, @PathVariable boardId: Long, @PathVariable postId: Long) : ResponseEntity<PostResponseDto>{
-        val posts = postService.scrapOrUnscrapPost(authentication, postId)
+        val posts = postService.scrapPost(authentication,boardId, postId)
+        return ResponseEntity.ok(posts)
+    }
+    @DeleteMapping("/scraps/{boardId}/{postId}")
+    fun unScrapPost(authentication: Authentication, @PathVariable boardId: Long, @PathVariable postId: Long) : ResponseEntity<PostResponseDto>{
+        val posts = postService.unScrapPost(authentication,boardId, postId)
         return ResponseEntity.ok(posts)
     }
     @GetMapping("/scraps")

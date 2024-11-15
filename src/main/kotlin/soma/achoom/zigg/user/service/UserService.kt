@@ -5,12 +5,14 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import soma.achoom.zigg.auth.dto.OAuthProviderEnum
 import soma.achoom.zigg.auth.filter.CustomUserDetails
+import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.content.entity.Image
 import soma.achoom.zigg.content.repository.ImageRepository
 import soma.achoom.zigg.content.repository.VideoRepository
 import soma.achoom.zigg.firebase.dto.FCMTokenRequestDto
 import soma.achoom.zigg.firebase.service.FCMService
 import soma.achoom.zigg.invite.repository.InviteRepository
+import soma.achoom.zigg.post.repository.PostRepository
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.space.repository.SpaceUserRepository
 import soma.achoom.zigg.user.dto.UserRequestDto
@@ -29,7 +31,9 @@ class UserService(
     private val spaceUserRepository: SpaceUserRepository,
     private val imageRepository: ImageRepository,
     private val videoRepository: VideoRepository,
-    private val s3Service: S3Service, private val inviteRepository: InviteRepository
+    private val s3Service: S3Service,
+    private val inviteRepository: InviteRepository,
+    private val commentRepository: CommentRepository, private val postRepository: PostRepository
 ) {
     @Transactional(readOnly = true)
     fun searchUser(authentication: Authentication, nickname: String): List<UserResponseDto> {
@@ -147,6 +151,16 @@ class UserService(
         inviteRepository.findInvitesByInvitee(user).forEach {
             inviteRepository.delete(it)
         }
+        commentRepository.findCommentsByCreatorUser(user).forEach{
+            it.creator.user = null
+            commentRepository.save(it)
+        }
+        postRepository.findPostsByCreator(user).forEach{
+            it.creator = null
+            postRepository.save(it)
+        }
+
+
         userRepository.delete(user)
     }
     @Transactional(readOnly = false)

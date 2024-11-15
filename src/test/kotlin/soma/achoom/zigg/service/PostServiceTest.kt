@@ -104,9 +104,9 @@ class PostServiceTest {
     fun `like unlike post`(){
         val user = dummyDataUtil.createDummyUser()
         val auth = dummyDataUtil.createDummyAuthentication(user)
-        postService.likeOrUnlikePost(auth, post.postId!!)
+        postService.likePost(auth, board.boardId!!,post.postId!!)
 
-        postService.likeOrUnlikePost(auth, post.postId!!)
+        postService.unlikePost(auth, board.boardId!! ,post.postId!!)
     }
     @Test
     fun `scrap unscrap post`() {

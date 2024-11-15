@@ -7,4 +7,6 @@ import soma.achoom.zigg.user.entity.User
 
 interface CommentLikeRepository : JpaRepository<CommentLike,Long> {
     fun findCommentLikeByCommentAndUser(comment: Comment, user: User): CommentLike?
+    fun existsCommentLikesByCommentAndUser(comment: Comment,user: User):Boolean
+    fun deleteCommentLikeByCommentAndUser(comment: Comment,user: User)
 }
