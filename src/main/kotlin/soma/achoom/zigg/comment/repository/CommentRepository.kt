@@ -9,4 +9,5 @@ interface CommentRepository : JpaRepository<Comment,Long> {
     fun findCommentsByCreatorUser(user: User): List<Comment>
     fun findCommentsByPost(post: Post): List<Comment>
     fun countCommentsByPost(post: Post): Long
+    fun deleteCommentsByPost(post: Post)
 }

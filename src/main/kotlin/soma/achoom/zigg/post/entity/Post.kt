@@ -18,7 +18,7 @@ class Post(
 
     @ManyToOne
     @JoinColumn(name = "creator")
-    val creator: User,
+    var creator: User?,
 
     @Column(name = "title")
     var title: String,
@@ -29,6 +29,12 @@ class Post(
 
     @Column(name = "is_anonymous")
     val anonymous : Boolean,
+    @Column(name = "like_cnt")
+    var likes : Int = 0,
+    @Column(name = "scrap_cnt")
+    var scraps:  Int = 0,
+    @Column(name = "comment_cnt")
+    var comments:Int = 0,
 
     @OneToMany(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var imageContents: MutableList<Image> = mutableListOf(),
@@ -38,6 +44,9 @@ class Post(
 
     @ManyToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
     var videoThumbnail: Image? = null,
+
+    @Version
+    var version: Int = 0
 
     ) : BaseEntity() {
 

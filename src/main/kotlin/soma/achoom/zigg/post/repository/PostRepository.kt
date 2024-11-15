@@ -20,5 +20,4 @@ interface PostRepository : JpaRepository<Post,Long>{
 
     fun findPostsByBoard(board: Board, pageable: Pageable): Page<Post>
     fun findPostsByCreator(user: User): List<Post>
-
 }
