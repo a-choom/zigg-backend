@@ -191,6 +191,7 @@ class PostService(
         if (post.creator?.userId != user.userId) {
             throw PostCreatorMismatchException()
         }
+        commentLikeRepository.deleteCommentLikesByCommentPost(post)
         commentRepository.deleteCommentsByPost(post)
         postLikeRepository.deletePostLikesByPost(post)
         postScrapRepository.deletePostScrapsByPost(post)
