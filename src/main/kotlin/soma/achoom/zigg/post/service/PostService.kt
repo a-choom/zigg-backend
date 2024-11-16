@@ -14,6 +14,7 @@ import soma.achoom.zigg.comment.entity.Comment
 import soma.achoom.zigg.comment.entity.CommentType
 import soma.achoom.zigg.comment.repository.CommentLikeRepository
 import soma.achoom.zigg.comment.repository.CommentRepository
+import soma.achoom.zigg.comment.service.CommentService
 import soma.achoom.zigg.content.dto.ImageResponseDto
 import soma.achoom.zigg.content.dto.VideoResponseDto
 import soma.achoom.zigg.content.entity.Image
@@ -45,6 +46,7 @@ class PostService(
     private val s3Service: S3Service,
     private val commentRepository: CommentRepository,
     private val commentLikeRepository: CommentLikeRepository,
+    private val commentService: CommentService
 ) {
 
     companion object {
@@ -329,8 +331,9 @@ class PostService(
         )
     }
 
-    private fun generatePostResponse(post: Post, comments: List<Comment>, user: User): PostResponseDto {
-        return PostResponseDto(postId = post.postId!!,
+     fun generatePostResponse(post: Post, comments: List<Comment>, user: User): PostResponseDto {
+        return PostResponseDto(
+            postId = post.postId!!,
             postTitle = post.title,
             postMessage = post.textContent,
             postImageContents = post.imageContents.map { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
@@ -352,43 +355,14 @@ class PostService(
             createdAt = post.createAt,
             postCreator = UserResponseDto(
                 userId = post.creator?.userId,
-                userName = if (post.anonymous) "익명"  else if (post.creator == null ) "알수없음" else post.creator?.name,
+                userName = if (post.anonymous) "익명"  else if (post.creator == null) "알수없음" else post.creator?.name,
                 profileImageUrl = if (post.anonymous || post.creator == null) null else s3Service.getPreSignedGetUrl(post.creator?.profileImageKey?.imageKey)
             ),
             isAnonymous = post.anonymous,
             comments = commentRepository.findCommentsByPost(post).filter {
                 it.commentType == CommentType.COMMENT
             }.map {
-                comment->
-                CommentResponseDto(
-                    commentId = comment.commentId,
-                    commentMessage = comment.textComment,
-                    commentLike = comment.likes,
-                    commentCreator = UserResponseDto(
-                        userId = comment.creator.user?.userId,
-                        userName =  if(comment.creator.user == null || comment.isDeleted) "알수없음" else if(comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user?.name,
-                        profileImageUrl = if (comment.isDeleted || comment.creator.anonymous || comment.creator.user == null) null else s3Service.getPreSignedGetUrl(comment.creator.user?.profileImageKey?.imageKey),
-                    ),
-                    createdAt = comment.createAt,
-                    childComment = comment.replies.map { reply ->
-                        CommentResponseDto(
-                            commentId = reply.commentId,
-                            commentLike = reply.likes,
-                            commentMessage = if(reply.isDeleted) "알수없음" else reply.textComment,
-                            commentCreator = UserResponseDto(
-                                userId = reply.creator.user?.userId,
-                                userName = if(reply.creator.user == null || reply.isDeleted) "알수없음" else if(reply.creator.anonymous) reply.creator.anonymousName else reply.creator.user?.name,
-                                profileImageUrl = if(reply.isDeleted || reply.creator.anonymous || reply.creator.user == null) null else s3Service.getPreSignedGetUrl(reply.creator.user?.profileImageKey?.imageKey)
-                            ),
-                            createdAt = reply.createAt,
-                            isAnonymous = reply.creator.anonymous,
-                            isLiked = commentLikeRepository.existsCommentLikesByCommentAndUser(reply,user)
-                        )
-                    }.toMutableList(),
-                    isAnonymous = comment.creator.anonymous,
-                    isLiked = commentLikeRepository.existsCommentLikesByCommentAndUser(comment,user)
-
-                )
+                comment -> commentService.generateCommentResponse(comment,user)
             }
         )
     }
