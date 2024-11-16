@@ -121,9 +121,6 @@ class CommentService(
             throw CommentUserMissMatchException()
         }
         comment.isDeleted = true
-        comment.creator.anonymous = true
-        comment.creator.anonymousName = "알 수 없음."
-        comment.textComment = "삭제된 댓글입니다."
         commentRepository.save(comment)
         post.comments-=1
         postRepository.save(post)
@@ -182,10 +179,10 @@ class CommentService(
                 CommentResponseDto(
                     commentId = reply.commentId,
                     commentLike = reply.likes,
-                    commentMessage = reply.textComment,
+                    commentMessage = if(reply.creator.user == null || reply.isDeleted) "알수없음" else reply.textComment,
                     commentCreator = UserResponseDto(
                         userId = reply.creator.user?.userId,
-                        userName = if(reply.creator.anonymous) reply.creator.anonymousName else if(reply.creator.user == null) "알수없음" else reply.creator.user?.name,
+                        userName = if(reply.creator.user == null || reply.isDeleted) "알수없음" else if(reply.creator.anonymous) reply.creator.anonymousName else reply.creator.user?.name,
                         profileImageUrl = if(reply.creator.anonymous || reply.creator.user == null) null else s3Service.getPreSignedGetUrl(reply.creator.user?.profileImageKey?.imageKey)
                     ),
                     createdAt = reply.createAt,

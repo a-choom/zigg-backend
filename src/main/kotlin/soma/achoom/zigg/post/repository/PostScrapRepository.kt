@@ -14,4 +14,5 @@ interface PostScrapRepository : JpaRepository<PostScrap, Long> {
     fun deletePostScrapsByPost(postPost: Post)
     fun existsPostLikeByPostAndUser(post:Post,user: User) : Boolean
     fun deletePostLikeByPostAndUser(post: Post,user: User)
+    fun deletePostScrapsByUser(user: User)
 }
