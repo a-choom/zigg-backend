@@ -155,11 +155,11 @@ class CommentService(
         return generateCommentResponse(comment,user)
     }
 
-    private fun generateCommentResponse(comment: Comment,user: User): CommentResponseDto{
+     fun generateCommentResponse(comment: Comment,user: User): CommentResponseDto{
         return CommentResponseDto(
             commentId = comment.commentId,
             commentLike = comment.likes,
-            commentMessage = if(comment.isDeleted) "알수없음" else comment.textComment,
+            commentMessage = if(comment.isDeleted) "삭제된 메세지입니다." else comment.textComment,
             commentCreator = UserResponseDto(
                 userId = comment.creator.user?.userId,
                 userName = if(comment.isDeleted || comment.creator.user == null) "알수없음" else if (comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user?.name,
@@ -172,7 +172,7 @@ class CommentService(
                 CommentResponseDto(
                     commentId = reply.commentId,
                     commentLike = reply.likes,
-                    commentMessage = if(reply.isDeleted) "알수없음" else reply.textComment,
+                    commentMessage = if(reply.isDeleted) "삭제된 메세지입니다." else reply.textComment,
                     commentCreator = UserResponseDto(
                         userId = reply.creator.user?.userId,
                         userName = if(reply.creator.user == null || reply.isDeleted) "알수없음" else if(reply.creator.anonymous) reply.creator.anonymousName else reply.creator.user?.name,
