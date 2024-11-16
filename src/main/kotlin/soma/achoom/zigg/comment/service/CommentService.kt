@@ -155,15 +155,15 @@ class CommentService(
         return generateCommentResponse(comment,user)
     }
 
-    fun generateCommentResponse(comment: Comment,user: User): CommentResponseDto{
+    private fun generateCommentResponse(comment: Comment,user: User): CommentResponseDto{
         return CommentResponseDto(
             commentId = comment.commentId,
             commentLike = comment.likes,
-            commentMessage = comment.textComment,
+            commentMessage = if(comment.isDeleted) "알수없음" else comment.textComment,
             commentCreator = UserResponseDto(
                 userId = comment.creator.user?.userId,
-                userName = if (comment.creator.anonymous) comment.creator.anonymousName else if(comment.creator.user == null) "알수없음" else comment.creator.user?.name,
-                profileImageUrl = if (comment.creator.anonymous || comment.creator.user == null) null else s3Service.getPreSignedGetUrl(comment.creator.user?.profileImageKey?.imageKey),
+                userName = if(comment.isDeleted || comment.creator.user == null) "알수없음" else if (comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user?.name,
+                profileImageUrl = if (comment.isDeleted || comment.creator.anonymous || comment.creator.user == null) null else s3Service.getPreSignedGetUrl(comment.creator.user?.profileImageKey?.imageKey),
             ),
             createdAt = comment.createAt,
             isAnonymous = comment.creator.anonymous,
@@ -172,11 +172,11 @@ class CommentService(
                 CommentResponseDto(
                     commentId = reply.commentId,
                     commentLike = reply.likes,
-                    commentMessage = if(reply.creator.user == null || reply.isDeleted) "알수없음" else reply.textComment,
+                    commentMessage = if(reply.isDeleted) "알수없음" else reply.textComment,
                     commentCreator = UserResponseDto(
                         userId = reply.creator.user?.userId,
                         userName = if(reply.creator.user == null || reply.isDeleted) "알수없음" else if(reply.creator.anonymous) reply.creator.anonymousName else reply.creator.user?.name,
-                        profileImageUrl = if(reply.creator.anonymous || reply.creator.user == null) null else s3Service.getPreSignedGetUrl(reply.creator.user?.profileImageKey?.imageKey)
+                        profileImageUrl = if(reply.isDeleted || reply.creator.anonymous || reply.creator.user == null) null else s3Service.getPreSignedGetUrl(reply.creator.user?.profileImageKey?.imageKey)
                     ),
                     createdAt = reply.createAt,
                     isAnonymous = reply.creator.anonymous,

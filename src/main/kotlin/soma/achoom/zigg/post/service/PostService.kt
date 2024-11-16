@@ -322,7 +322,7 @@ class PostService(
             createdAt = post.createAt,
             postCreator = UserResponseDto(
                 userId = post.creator?.userId,
-                userName = if (post.anonymous) "익명"  else if (post.creator == null ) "알수없음" else post.creator?.name,
+                userName = if (post.anonymous) "익명"  else if (post.creator == null) "알수없음" else post.creator?.name,
                 profileImageUrl = if (post.anonymous || post.creator == null) null else s3Service.getPreSignedGetUrl(post.creator?.profileImageKey?.imageKey)
             ),
             isAnonymous = post.anonymous
@@ -366,19 +366,19 @@ class PostService(
                     commentLike = comment.likes,
                     commentCreator = UserResponseDto(
                         userId = comment.creator.user?.userId,
-                        userName = if (comment.creator.anonymous) comment.creator.anonymousName else if(comment.creator.user == null) "알수없음" else comment.creator.user?.name,
-                        profileImageUrl = if (comment.creator.anonymous || comment.creator.user == null) null else s3Service.getPreSignedGetUrl(comment.creator.user?.profileImageKey?.imageKey),
+                        userName =  if(comment.creator.user == null || comment.isDeleted) "알수없음" else if(comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user?.name,
+                        profileImageUrl = if (comment.isDeleted || comment.creator.anonymous || comment.creator.user == null) null else s3Service.getPreSignedGetUrl(comment.creator.user?.profileImageKey?.imageKey),
                     ),
                     createdAt = comment.createAt,
                     childComment = comment.replies.map { reply ->
                         CommentResponseDto(
                             commentId = reply.commentId,
-                            commentMessage = reply.textComment,
                             commentLike = reply.likes,
+                            commentMessage = if(reply.isDeleted) "알수없음" else reply.textComment,
                             commentCreator = UserResponseDto(
                                 userId = reply.creator.user?.userId,
-                                userName = if (reply.creator.anonymous) reply.creator.anonymousName else if(comment.creator.user == null) "알수없음"  else reply.creator.user?.name,
-                                profileImageUrl = if (reply.creator.anonymous || comment.creator.user == null) null else s3Service.getPreSignedGetUrl(reply.creator.user?.profileImageKey?.imageKey),
+                                userName = if(reply.creator.user == null || reply.isDeleted) "알수없음" else if(reply.creator.anonymous) reply.creator.anonymousName else reply.creator.user?.name,
+                                profileImageUrl = if(reply.isDeleted || reply.creator.anonymous || reply.creator.user == null) null else s3Service.getPreSignedGetUrl(reply.creator.user?.profileImageKey?.imageKey)
                             ),
                             createdAt = reply.createAt,
                             isAnonymous = reply.creator.anonymous,
