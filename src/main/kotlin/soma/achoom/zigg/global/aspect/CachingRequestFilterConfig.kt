@@ -7,8 +7,8 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class CachingRequestFilterConfig {
     @Bean
-    fun cachingRequestFilter(): FilterRegistrationBean<CachingRequestFilter>{
-        val registrationBean = FilterRegistrationBean(CachingRequestFilter())
+    fun cachingRequestFilter(): FilterRegistrationBean<CachingCustomRequestFilter>{
+        val registrationBean = FilterRegistrationBean(CachingCustomRequestFilter())
         registrationBean.addUrlPatterns("/api/*")
         return registrationBean
     }
