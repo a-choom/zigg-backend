@@ -210,10 +210,7 @@ class PostService(
             user = user
         )
         postLikeRepository.save(postLike)
-        post.likes+=1
-        postRepository.save(post)
         return generatePostResponse(post,user)
-
     }
 
     @Transactional(readOnly = false)
@@ -224,10 +221,7 @@ class PostService(
             throw PostLikeNotFoundException()
         }
         postLikeRepository.deletePostLikeByPostAndUser(post,user)
-        post.likes-=1
-        postRepository.save(post)
         return generatePostResponse(post,user)
-
     }
 
 
@@ -243,10 +237,7 @@ class PostService(
             user = user
         )
         postScrapRepository.save(postScrap)
-        post.scraps+=1
-        postRepository.save(post)
         return generatePostResponse(post,user)
-
     }
 
     @Transactional(readOnly = false)
@@ -257,10 +248,7 @@ class PostService(
             throw PostScrapNotFoundException()
         }
         postScrapRepository.deletePostLikeByPostAndUser(post,user)
-        post.scraps-=1
-        postRepository.save(post)
         return generatePostResponse(post,user)
-
     }
 
 

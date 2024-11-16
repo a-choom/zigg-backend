@@ -55,8 +55,7 @@ class CommentService(
         )
 
         commentRepository.save(comment)
-        post.comments+=1
-        postRepository.save(post)
+
         return commentRepository.findCommentsByPost(post).filter { it.commentType == CommentType.COMMENT}.map{
             generateCommentResponse(it,user)
         }
@@ -86,8 +85,6 @@ class CommentService(
 
         parentComment.replies.add(childComment)
         commentRepository.save(parentComment)
-        post.comments+=1
-        postRepository.save(post)
 
         return commentRepository.findCommentsByPost(post).filter { it.commentType == CommentType.COMMENT }.map{
             generateCommentResponse(it,user)
@@ -142,8 +139,6 @@ class CommentService(
             user = user
         )
         commentLikeRepository.save(commentLike)
-        comment.likes+=1
-        commentRepository.save(comment)
         return generateCommentResponse(comment,user)
     }
 
@@ -157,8 +152,6 @@ class CommentService(
             throw CommentLikeNotFoundException()
         }
         commentLikeRepository.deleteCommentLikeByCommentAndUser(comment,user)
-        comment.likes -= 1
-        commentRepository.save(comment)
         return generateCommentResponse(comment,user)
     }
 
