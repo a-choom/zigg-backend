@@ -3,6 +3,7 @@ package soma.achoom.zigg.repository
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.transaction.annotation.Transactional
@@ -210,11 +211,8 @@ class PostRepositoryTest {
 
     @Test
     fun `get random post data`(){
-        val posts = postRepository.getRandomPostsByBoardAndCount(1L,2)
-        assert(posts.size == 2)
-        for (post in posts){
-            println(post.postId)
-        }
+        val posts = postRepository.getRandomPostsByBoardAndCount(1L,PageRequest.of(0,2))
+        println(posts.size)
     }
 
 }

@@ -9,6 +9,7 @@ import java.time.LocalDateTime
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class PostResponseDto(
+    val boardId: Long,
     val postId: Long,
     val postTitle: String,
     val postCreator: UserResponseDto,
