@@ -19,6 +19,12 @@ class SpaceController(
     private val spaceService: SpaceService,
     private val s3Service: S3Service,
 ) {
+    @GetMapping("/deferred/{spaceId}")
+    fun enterSpaceWithDeferredAppLink(authentication: Authentication,@PathVariable spaceId: Long) :ResponseEntity<Void> {
+        spaceService.enterSpaceByDeferredAppLink(authentication,spaceId)
+        return ResponseEntity.noContent().build()
+    }
+
     @PostMapping("/pre-signed-url")
     fun getPreSignUrl(@RequestBody uploadContentTypeRequestDto: UploadContentTypeRequestDto) : ResponseEntity<String> {
         val preSignUrl = s3Service.getPreSignedPutUrl(S3DataType.SPACE_IMAGE,UUID.randomUUID(),uploadContentTypeRequestDto)
