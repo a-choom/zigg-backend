@@ -19,6 +19,11 @@ class SpaceController(
     private val spaceService: SpaceService,
     private val s3Service: S3Service,
 ) {
+    @GetMapping("/recent")
+    fun getRecentSpaces(authentication: Authentication, @RequestParam("page") page:Int) : ResponseEntity<List<SpaceResponseDto>>{
+        return ResponseEntity.ok(spaceService.getRecentSpaceInfos(authentication,page))
+    }
+
     @GetMapping("/deferred/{spaceId}")
     fun enterSpaceWithDeferredAppLink(authentication: Authentication,@PathVariable spaceId: Long) :ResponseEntity<Void> {
         spaceService.enterSpaceByDeferredAppLink(authentication,spaceId)

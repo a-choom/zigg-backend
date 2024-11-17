@@ -1,6 +1,7 @@
 package soma.achoom.zigg.space.service
 
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.data.domain.PageRequest
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -9,6 +10,7 @@ import soma.achoom.zigg.content.exception.ImageNotfoundException
 import soma.achoom.zigg.content.repository.ImageRepository
 import soma.achoom.zigg.firebase.dto.FCMEvent
 import soma.achoom.zigg.firebase.service.FCMService
+import soma.achoom.zigg.global.util.DateDiffCalculator
 import soma.achoom.zigg.history.dto.HistoryResponseDto
 import soma.achoom.zigg.invite.dto.InviteRequestDto
 import soma.achoom.zigg.invite.entity.InviteStatus
@@ -24,6 +26,7 @@ import soma.achoom.zigg.space.exception.SpaceUserNotFoundInSpaceException
 import soma.achoom.zigg.space.repository.SpaceUserRepository
 import soma.achoom.zigg.user.entity.User
 import soma.achoom.zigg.user.service.UserService
+import java.time.LocalDateTime
 
 
 @Service
@@ -39,11 +42,69 @@ class SpaceService(
     @Value("\${space.default.image.url}")
     private lateinit var defaultSpaceImageUrl: String
 
+    companion object {
+        private const val RECENT_HISTORIES_PER_SPACE_NUM = 2
+        private const val RECENT_SPACE_PAGE_SIZE = 2
+    }
+
+    @Transactional(readOnly = true)
+    fun getRecentSpaceInfos(authentication: Authentication, page: Int): List<SpaceResponseDto> {
+        val user = userService.authenticationToUser(authentication)
+        val spaceUsers =
+            spaceUserRepository.findSpaceUsersByUser(user, PageRequest.of(page, RECENT_SPACE_PAGE_SIZE))
+        val spaceResponseDto: MutableList<SpaceResponseDto> = mutableListOf()
+        spaceUsers.map {
+            var historyPerSpaceCount = 0
+            val recentSpaceInfo = SpaceResponseDto(
+                spaceId = it.space.spaceId,
+                spaceName = it.space.name,
+                spaceImageUrl = s3Service.getPreSignedGetUrl(it.space.imageKey.imageKey),
+                referenceVideoUrl = it.space.referenceVideoKey,
+                spaceUsers = spaceUserRepository.findSpaceUserBySpace(it.space)
+                    .filter { spaceUser -> spaceUser.withdraw.not() }.map { spaceUser ->
+                        SpaceUserResponseDto(
+                            userId = spaceUser.user?.userId,
+                            userNickname = spaceUser.user?.nickname ?: "알수없음",
+                            spaceUserId = spaceUser.spaceUserId,
+                            spaceRole = spaceUser.role,
+                            profileImageUrl = s3Service.getPreSignedGetUrl(spaceUser.user?.profileImageKey?.imageKey),
+                            userName = spaceUser.user?.name ?: "알수없음"
+                        )
+                    }.toMutableSet(),
+                history = mutableSetOf(),
+                createdAt = it.space.createAt,
+                updatedAt = it.space.updateAt,
+            )
+
+            for (history in it.space.histories) {
+                if (DateDiffCalculator.calculateDateDiffByDate(LocalDateTime.now(), history.updateAt) <= 7) {
+                    recentSpaceInfo.history?.add(
+                        HistoryResponseDto(
+                            historyId = history.historyId,
+                            historyName = history.name,
+                            historyVideoPreSignedUrl = s3Service.getPreSignedGetUrl(history.videoKey.videoKey),
+                            historyVideoThumbnailPreSignedUrl = s3Service.getPreSignedGetUrl(history.videoThumbnailUrl.imageKey),
+                            createdAt = history.createAt,
+                            feedbackCount = history.feedbacks.size,
+                            videoDuration = history.videoKey.duration,
+                        )
+                    )
+                }
+                historyPerSpaceCount += 1
+                if (historyPerSpaceCount == RECENT_HISTORIES_PER_SPACE_NUM) {
+                    spaceResponseDto.add(recentSpaceInfo)
+                    break
+                }
+            }
+        }
+        return spaceResponseDto
+    }
+
     @Transactional(readOnly = false)
-    fun enterSpaceByDeferredAppLink(authentication: Authentication, spaceId: Long){
+    fun enterSpaceByDeferredAppLink(authentication: Authentication, spaceId: Long) {
         val user = userService.authenticationToUser(authentication)
 
-        val space = spaceRepository.findById(spaceId).orElseThrow{SpaceNotFoundException()}
+        val space = spaceRepository.findById(spaceId).orElseThrow { SpaceNotFoundException() }
         if (spaceUserRepository.existsSpaceUserBySpaceAndUser(space, user)) {
             throw UserAlreadyInSpaceException()
         }
@@ -261,8 +322,7 @@ class SpaceService(
                     createdAt = it.createAt,
                     feedbackCount = it.feedbacks.size,
                     videoDuration = it.videoKey.duration,
-
-                    )
+                )
             }.toMutableSet(),
             createdAt = space.createAt,
             updatedAt = space.updateAt,

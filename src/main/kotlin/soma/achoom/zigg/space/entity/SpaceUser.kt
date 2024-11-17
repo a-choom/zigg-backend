@@ -15,7 +15,7 @@ class SpaceUser(
 
     @ManyToOne
     @JoinColumn(name = "space_id")
-    var space: Space?,
+    var space: Space,
 
     @ManyToOne
     @JoinColumn(name = "user_id")

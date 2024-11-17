@@ -60,7 +60,7 @@ class PostService(
     fun getRandomPostsFromBoard(authentication: Authentication, boardId: Long) : List<PostResponseDto>{
         val user = userService.authenticationToUser(authentication)
         boardRepository.findById(boardId).orElseThrow{BoardNotFoundException()}
-        val posts = postRepository.getRandomPostsByBoardAndCount(boardId, POST_RANDOM_POST)
+        val posts = postRepository.getRandomPostsByBoardAndCount(boardId, PageRequest.of(0, POST_RANDOM_POST))
         return posts.map { generatePostResponse(it,user) }
     }
 
@@ -310,7 +310,9 @@ class PostService(
 
 
     private fun generatePostResponse(post: Post, user: User): PostResponseDto {
-        return PostResponseDto(postId = post.postId!!,
+        return PostResponseDto(
+            boardId = post.board.boardId!!,
+            postId = post.postId!!,
             postTitle = post.title,
             postMessage = post.textContent,
             postImageContents = post.imageContents.map { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
@@ -342,6 +344,7 @@ class PostService(
 
      fun generatePostResponse(post: Post, comments: List<Comment>, user: User): PostResponseDto {
         return PostResponseDto(
+            boardId = post.board.boardId!!,
             postId = post.postId!!,
             postTitle = post.title,
             postMessage = post.textContent,
