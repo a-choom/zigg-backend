@@ -208,4 +208,13 @@ class PostRepositoryTest {
         assert(commentRepository.findCommentsByCreatorUser(user).isEmpty())
     }
 
+    @Test
+    fun `get random post data`(){
+        val posts = postRepository.getRandomPostsByBoardAndCount(1L,2)
+        assert(posts.size == 2)
+        for (post in posts){
+            println(post.postId)
+        }
+    }
+
 }

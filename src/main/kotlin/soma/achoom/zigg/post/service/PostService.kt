@@ -53,12 +53,21 @@ class PostService(
         private const val POST_PAGE_SIZE = 15
         private const val POST_BEST_SIZE = 2
         private const val POST_IMAGE_MAX = 5
+        private const val POST_RANDOM_POST = 2
+    }
+
+    @Transactional(readOnly = true)
+    fun getRandomPostsFromBoard(authentication: Authentication, boardId: Long) : List<PostResponseDto>{
+        val user = userService.authenticationToUser(authentication)
+        boardRepository.findById(boardId).orElseThrow{BoardNotFoundException()}
+        val posts = postRepository.getRandomPostsByBoardAndCount(boardId, POST_RANDOM_POST)
+        return posts.map { generatePostResponse(it,user) }
     }
 
     @Transactional(readOnly = false)
     fun createPost(authentication: Authentication, boardId: Long, postRequestDto: PostRequestDto): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
-        val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
+        val board = boardRepository.findById(boardId).orElseThrow{BoardNotFoundException()}
 
         if(postRequestDto.postImageContent.size > POST_IMAGE_MAX) {
             throw PostImageContentMaximumException(POST_IMAGE_MAX)
