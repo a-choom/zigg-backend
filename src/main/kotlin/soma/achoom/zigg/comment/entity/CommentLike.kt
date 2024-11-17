@@ -1,6 +1,8 @@
 package soma.achoom.zigg.comment.entity
 
 import jakarta.persistence.*
+import soma.achoom.zigg.comment.listener.CommentEntityListener
+import soma.achoom.zigg.comment.listener.CommentLikeEntityListener
 import soma.achoom.zigg.global.BaseEntity
 import soma.achoom.zigg.user.entity.User
 
@@ -12,7 +14,7 @@ class CommentLike(
     val commentLikeId: Long? = null,
 
     @ManyToOne
-    var comment: Comment?,
+    var comment: Comment,
 
     @ManyToOne
     var user: User?

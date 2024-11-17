@@ -13,6 +13,7 @@ import soma.achoom.zigg.history.dto.HistoryResponseDto
 import soma.achoom.zigg.invite.dto.InviteRequestDto
 import soma.achoom.zigg.invite.entity.InviteStatus
 import soma.achoom.zigg.invite.entity.Invite
+import soma.achoom.zigg.invite.exception.UserAlreadyInSpaceException
 import soma.achoom.zigg.invite.repository.InviteRepository
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.space.dto.*
@@ -37,6 +38,22 @@ class SpaceService(
 ) {
     @Value("\${space.default.image.url}")
     private lateinit var defaultSpaceImageUrl: String
+
+    @Transactional(readOnly = false)
+    fun enterSpaceByDeferredAppLink(authentication: Authentication, spaceId: Long){
+        val user = userService.authenticationToUser(authentication)
+
+        val space = spaceRepository.findById(spaceId).orElseThrow{SpaceNotFoundException()}
+        if (spaceUserRepository.existsSpaceUserBySpaceAndUser(space, user)) {
+            throw UserAlreadyInSpaceException()
+        }
+        val spaceUser = SpaceUser(
+            user = user,
+            space = space,
+            role = SpaceRole.USER
+        )
+        spaceUserRepository.save(spaceUser)
+    }
 
     @Transactional(readOnly = false)
     fun inviteSpace(

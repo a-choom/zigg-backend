@@ -77,14 +77,9 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-      - name: Delete tag if build or test fails
-        env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Delete tag if build fails
         run: |
-            RC_TAG="${{ needs.build-and-deploy.outputs.rc_tag }}"
-            if [ -n "$RC_TAG" ]; then
-              git tag -d "$RC_TAG"
-              git push origin :refs/tags/"$RC_TAG"
-            else
-              echo "No tag to delete."
-            fi
+            TAG_NAME=${GITHUB_REF#refs/tags/}  # 현재 태그 이름 추출
+            echo "Deleting tag $TAG_NAME due to failure."
+            git tag -d $TAG_NAME  # 로컬 태그 삭제
+            git push origin --delete $TAG_NAME  # 원격 태그 삭제

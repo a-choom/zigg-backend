@@ -11,6 +11,7 @@ import soma.achoom.zigg.board.entity.Board
 import soma.achoom.zigg.board.repository.BoardRepository
 import soma.achoom.zigg.comment.entity.Comment
 import soma.achoom.zigg.comment.entity.CommentCreator
+import soma.achoom.zigg.comment.entity.CommentType
 import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.data.DummyDataUtil
 import soma.achoom.zigg.post.entity.Post
@@ -50,7 +51,6 @@ class PostRepositoryTest {
         )
         for (i in 1..10) {
             val users = dummyDataUtil.createDummyUserList(i)
-
             postRepository.save(
                 Post(
                     creator = user,
@@ -58,7 +58,6 @@ class PostRepositoryTest {
                     textContent = "content$i",
                     board = board,
                     anonymous = false
-
                 )
             )
         }
@@ -66,10 +65,40 @@ class PostRepositoryTest {
     }
 
     @Test
-    fun `hottest post while 3 days`() {
+    fun `hottest post while 3 days with 0 likes posts`() {
         val posts = postRepository.findBestPosts(Pageable.ofSize(2))
-        assert(posts.size == 2)
-
+        assert(posts.isEmpty())
+        println(posts.size)
+    }
+    @Test
+    fun `hottest post while 3 days with 10+a likes posts`(){
+        val user = dummyDataUtil.createDummyUser()
+        val board = Board(
+            name = "test",
+        )
+        boardRepository.save(board)
+        val post = Post(
+            creator = user,
+            title = "title",
+            textContent = "content",
+            board = board,
+            anonymous = false
+        )
+        postRepository.save(post)
+        for (i in 1..10) {
+            val users = dummyDataUtil.createDummyUserList(i)
+            postLikeRepository.saveAll(
+                users.map {
+                    PostLike(
+                        user = it,
+                        post = post
+                    )
+                }
+            )
+        }
+        val posts = postRepository.findBestPosts(Pageable.ofSize(2))
+        assert(posts.size == 1)
+        println(posts.size)
     }
 
     @Test
@@ -159,7 +188,8 @@ class PostRepositoryTest {
                 anonymous = false
             ),
             textComment = "comment",
-            post = post
+            post = post,
+            commentType = CommentType.COMMENT
         )
         val comment2 = Comment(
             creator = CommentCreator(
@@ -168,13 +198,23 @@ class PostRepositoryTest {
                 anonymous = false
             ),
             textComment = "comment",
-            post = post
+            post = post,
+            commentType = CommentType.REPLY
         )
         comment1.replies.add(comment2)
         postRepository.save(post)
         postRepository.delete(post)
         println(commentRepository.findCommentsByCreatorUser(user).size)
         assert(commentRepository.findCommentsByCreatorUser(user).isEmpty())
+    }
+
+    @Test
+    fun `get random post data`(){
+        val posts = postRepository.getRandomPostsByBoardAndCount(1L,2)
+        assert(posts.size == 2)
+        for (post in posts){
+            println(post.postId)
+        }
     }
 
 }

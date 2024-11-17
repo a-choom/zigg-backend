@@ -2,9 +2,11 @@ package soma.achoom.zigg.post.entity
 
 import jakarta.persistence.*
 import soma.achoom.zigg.global.BaseEntity
+import soma.achoom.zigg.post.listener.PostLikeListener
 import soma.achoom.zigg.user.entity.User
 
 @Entity
+@EntityListeners(PostLikeListener::class)
 class PostLike(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

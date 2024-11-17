@@ -5,12 +5,17 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import soma.achoom.zigg.auth.dto.OAuthProviderEnum
 import soma.achoom.zigg.auth.filter.CustomUserDetails
+import soma.achoom.zigg.comment.repository.CommentLikeRepository
+import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.content.entity.Image
 import soma.achoom.zigg.content.repository.ImageRepository
 import soma.achoom.zigg.content.repository.VideoRepository
 import soma.achoom.zigg.firebase.dto.FCMTokenRequestDto
 import soma.achoom.zigg.firebase.service.FCMService
 import soma.achoom.zigg.invite.repository.InviteRepository
+import soma.achoom.zigg.post.repository.PostLikeRepository
+import soma.achoom.zigg.post.repository.PostRepository
+import soma.achoom.zigg.post.repository.PostScrapRepository
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.space.repository.SpaceUserRepository
 import soma.achoom.zigg.user.dto.UserRequestDto
@@ -29,7 +34,13 @@ class UserService(
     private val spaceUserRepository: SpaceUserRepository,
     private val imageRepository: ImageRepository,
     private val videoRepository: VideoRepository,
-    private val s3Service: S3Service, private val inviteRepository: InviteRepository
+    private val s3Service: S3Service,
+    private val inviteRepository: InviteRepository,
+    private val commentRepository: CommentRepository,
+    private val postRepository: PostRepository,
+    private val commentLikeRepository: CommentLikeRepository,
+    private val postLikeRepository: PostLikeRepository,
+    private val postScrapRepository: PostScrapRepository
 ) {
     @Transactional(readOnly = true)
     fun searchUser(authentication: Authentication, nickname: String): List<UserResponseDto> {
@@ -141,12 +152,19 @@ class UserService(
             it.uploader = null
             videoRepository.save(it)
         }
-        inviteRepository.findInvitesByInviter(user).forEach {
-            inviteRepository.delete(it)
+        inviteRepository.deleteInvitesByInviter(user)
+        inviteRepository.deleteInvitesByInvitee(user)
+        commentRepository.findCommentsByCreatorUser(user).forEach{
+            it.creator.user = null
+            commentRepository.save(it)
         }
-        inviteRepository.findInvitesByInvitee(user).forEach {
-            inviteRepository.delete(it)
+        postRepository.findPostsByCreator(user).forEach{
+            it.creator = null
+            postRepository.save(it)
         }
+        postScrapRepository.deletePostScrapsByUser(user)
+        commentLikeRepository.deleteCommentLikesByUser(user)
+        postLikeRepository.deletePostLikesByUser(user)
         userRepository.delete(user)
     }
     @Transactional(readOnly = false)

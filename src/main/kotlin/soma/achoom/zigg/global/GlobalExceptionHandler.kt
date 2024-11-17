@@ -1,12 +1,11 @@
 package soma.achoom.zigg.global
 
+import com.amazonaws.services.kms.model.AlreadyExistsException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
-import soma.achoom.zigg.comment.exception.AlreadyChildCommentException
-import soma.achoom.zigg.comment.exception.CommentNotFoundException
-import soma.achoom.zigg.comment.exception.CommentUserMissMatchException
+import soma.achoom.zigg.comment.exception.*
 import soma.achoom.zigg.content.exception.ImageNotfoundException
 import soma.achoom.zigg.feedback.exception.FeedbackNotFoundException
 import soma.achoom.zigg.firebase.exception.FCMMessagingFailException
@@ -16,7 +15,9 @@ import soma.achoom.zigg.invite.exception.InviteExpiredException
 import soma.achoom.zigg.invite.exception.InviteNotFoundException
 import soma.achoom.zigg.invite.exception.InvitedUserMissMatchException
 import soma.achoom.zigg.invite.exception.UserAlreadyInSpaceException
+import soma.achoom.zigg.post.exception.AlreadyLikedPostException
 import soma.achoom.zigg.post.exception.PostCreatorMismatchException
+import soma.achoom.zigg.post.exception.PostLikeNotFoundException
 import soma.achoom.zigg.post.exception.PostNotFoundException
 import soma.achoom.zigg.space.exception.*
 import soma.achoom.zigg.user.exception.GuestUserUpdateProfileLimitationException
@@ -124,6 +125,22 @@ class GlobalExceptionHandler {
     }
     @ExceptionHandler(AlreadyChildCommentException::class)
     fun handleAlreadyChildComment(e: AlreadyChildCommentException): ResponseEntity<Any> {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+    }
+    @ExceptionHandler(AlreadyLikedCommentException::class)
+    fun handlerAlreadyLikedCommentException(e : AlreadyLikedCommentException):ResponseEntity<Any>{
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+    }
+    @ExceptionHandler(CommentLikeNotFoundException::class)
+    fun handlerCommentLikeNotFoundException(e : CommentLikeNotFoundException):ResponseEntity<Any>{
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+    }
+    @ExceptionHandler(PostLikeNotFoundException::class)
+    fun handlerPostLikeNotFoundException(e : CommentLikeNotFoundException):ResponseEntity<Any>{
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+    }
+    @ExceptionHandler(AlreadyLikedPostException::class)
+    fun handlerAlreadyLikedPostException(e : AlreadyLikedPostException):ResponseEntity<Any>{
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
     }
 }
