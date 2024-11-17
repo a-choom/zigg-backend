@@ -35,6 +35,11 @@ class PostController(
         }
         else return ResponseEntity.badRequest().build()
     }
+    @GetMapping("/random/{boardId}")
+    fun getRandomPostsIncludeInBoard(authentication: Authentication, @PathVariable boardId: Long) : ResponseEntity<List<PostResponseDto>>{
+        return ResponseEntity.ok(postService.getRandomPostsFromBoard(authentication,boardId))
+    }
+
     @GetMapping("/{boardId}")
     fun getPosts(authentication: Authentication, @PathVariable boardId:Long,  @RequestParam("page") page: Int) : ResponseEntity<List<PostResponseDto>>{
         val posts = postService.getPosts(authentication, boardId, page)

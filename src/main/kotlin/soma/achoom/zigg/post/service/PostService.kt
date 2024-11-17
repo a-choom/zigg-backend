@@ -14,6 +14,7 @@ import soma.achoom.zigg.comment.entity.Comment
 import soma.achoom.zigg.comment.entity.CommentType
 import soma.achoom.zigg.comment.repository.CommentLikeRepository
 import soma.achoom.zigg.comment.repository.CommentRepository
+import soma.achoom.zigg.comment.service.CommentService
 import soma.achoom.zigg.content.dto.ImageResponseDto
 import soma.achoom.zigg.content.dto.VideoResponseDto
 import soma.achoom.zigg.content.entity.Image
@@ -45,18 +46,28 @@ class PostService(
     private val s3Service: S3Service,
     private val commentRepository: CommentRepository,
     private val commentLikeRepository: CommentLikeRepository,
+    private val commentService: CommentService
 ) {
 
     companion object {
         private const val POST_PAGE_SIZE = 15
         private const val POST_BEST_SIZE = 2
         private const val POST_IMAGE_MAX = 5
+        private const val POST_RANDOM_POST = 2
+    }
+
+    @Transactional(readOnly = true)
+    fun getRandomPostsFromBoard(authentication: Authentication, boardId: Long) : List<PostResponseDto>{
+        val user = userService.authenticationToUser(authentication)
+        boardRepository.findById(boardId).orElseThrow{BoardNotFoundException()}
+        val posts = postRepository.getRandomPostsByBoardAndCount(boardId, POST_RANDOM_POST)
+        return posts.map { generatePostResponse(it,user) }
     }
 
     @Transactional(readOnly = false)
     fun createPost(authentication: Authentication, boardId: Long, postRequestDto: PostRequestDto): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
-        val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
+        val board = boardRepository.findById(boardId).orElseThrow{BoardNotFoundException()}
 
         if(postRequestDto.postImageContent.size > POST_IMAGE_MAX) {
             throw PostImageContentMaximumException(POST_IMAGE_MAX)
@@ -210,10 +221,7 @@ class PostService(
             user = user
         )
         postLikeRepository.save(postLike)
-        post.likes+=1
-        postRepository.save(post)
         return generatePostResponse(post,user)
-
     }
 
     @Transactional(readOnly = false)
@@ -224,10 +232,7 @@ class PostService(
             throw PostLikeNotFoundException()
         }
         postLikeRepository.deletePostLikeByPostAndUser(post,user)
-        post.likes-=1
-        postRepository.save(post)
         return generatePostResponse(post,user)
-
     }
 
 
@@ -243,10 +248,7 @@ class PostService(
             user = user
         )
         postScrapRepository.save(postScrap)
-        post.scraps+=1
-        postRepository.save(post)
         return generatePostResponse(post,user)
-
     }
 
     @Transactional(readOnly = false)
@@ -257,10 +259,7 @@ class PostService(
             throw PostScrapNotFoundException()
         }
         postScrapRepository.deletePostLikeByPostAndUser(post,user)
-        post.scraps-=1
-        postRepository.save(post)
         return generatePostResponse(post,user)
-
     }
 
 
@@ -334,15 +333,16 @@ class PostService(
             createdAt = post.createAt,
             postCreator = UserResponseDto(
                 userId = post.creator?.userId,
-                userName = if (post.anonymous) "익명"  else if (post.creator == null ) "알수없음" else post.creator?.name,
+                userName = if (post.anonymous) "익명"  else if (post.creator == null) "알수없음" else post.creator?.name,
                 profileImageUrl = if (post.anonymous || post.creator == null) null else s3Service.getPreSignedGetUrl(post.creator?.profileImageKey?.imageKey)
             ),
             isAnonymous = post.anonymous
         )
     }
 
-    private fun generatePostResponse(post: Post, comments: List<Comment>, user: User): PostResponseDto {
-        return PostResponseDto(postId = post.postId!!,
+     fun generatePostResponse(post: Post, comments: List<Comment>, user: User): PostResponseDto {
+        return PostResponseDto(
+            postId = post.postId!!,
             postTitle = post.title,
             postMessage = post.textContent,
             postImageContents = post.imageContents.map { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
@@ -364,43 +364,14 @@ class PostService(
             createdAt = post.createAt,
             postCreator = UserResponseDto(
                 userId = post.creator?.userId,
-                userName = if (post.anonymous) "익명"  else if (post.creator == null ) "알수없음" else post.creator?.name,
+                userName = if (post.anonymous) "익명"  else if (post.creator == null) "알수없음" else post.creator?.name,
                 profileImageUrl = if (post.anonymous || post.creator == null) null else s3Service.getPreSignedGetUrl(post.creator?.profileImageKey?.imageKey)
             ),
             isAnonymous = post.anonymous,
             comments = commentRepository.findCommentsByPost(post).filter {
                 it.commentType == CommentType.COMMENT
             }.map {
-                comment->
-                CommentResponseDto(
-                    commentId = comment.commentId,
-                    commentMessage = comment.textComment,
-                    commentLike = comment.likes,
-                    commentCreator = UserResponseDto(
-                        userId = comment.creator.user?.userId,
-                        userName = if (comment.creator.anonymous) comment.creator.anonymousName else if(comment.creator.user == null) "알수없음" else comment.creator.user?.name,
-                        profileImageUrl = if (comment.creator.anonymous || comment.creator.user == null) null else s3Service.getPreSignedGetUrl(comment.creator.user?.profileImageKey?.imageKey),
-                    ),
-                    createdAt = comment.createAt,
-                    childComment = comment.replies.map { reply ->
-                        CommentResponseDto(
-                            commentId = reply.commentId,
-                            commentMessage = reply.textComment,
-                            commentLike = reply.likes,
-                            commentCreator = UserResponseDto(
-                                userId = reply.creator.user?.userId,
-                                userName = if (reply.creator.anonymous) reply.creator.anonymousName else if(comment.creator.user == null) "알수없음"  else reply.creator.user?.name,
-                                profileImageUrl = if (reply.creator.anonymous || comment.creator.user == null) null else s3Service.getPreSignedGetUrl(reply.creator.user?.profileImageKey?.imageKey),
-                            ),
-                            createdAt = reply.createAt,
-                            isAnonymous = reply.creator.anonymous,
-                            isLiked = commentLikeRepository.existsCommentLikesByCommentAndUser(reply,user)
-                        )
-                    }.toMutableList(),
-                    isAnonymous = comment.creator.anonymous,
-                    isLiked = commentLikeRepository.existsCommentLikesByCommentAndUser(comment,user)
-
-                )
+                comment -> commentService.generateCommentResponse(comment,user)
             }
         )
     }

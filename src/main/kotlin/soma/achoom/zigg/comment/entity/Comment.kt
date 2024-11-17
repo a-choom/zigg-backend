@@ -1,10 +1,12 @@
 package soma.achoom.zigg.comment.entity
 
 import jakarta.persistence.*
+import soma.achoom.zigg.comment.listener.CommentEntityListener
 import soma.achoom.zigg.global.BaseEntity
 import soma.achoom.zigg.post.entity.Post
 
 @Entity(name = "comment")
+@EntityListeners(CommentEntityListener::class)
 class Comment(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
