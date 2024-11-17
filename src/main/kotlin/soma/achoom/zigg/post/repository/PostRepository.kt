@@ -15,6 +15,11 @@ interface PostRepository : JpaRepository<Post,Long>{
     fun findPostsByBoardAndTitleContaining(board: Board, keyword: String, page: Pageable): Page<Post>
     @Query("SELECT p FROM post p LEFT JOIN PostLike pl ON pl.post = p WHERE local_date - p.createAt <= 3 GROUP BY p HAVING COUNT(pl) >= 10 ORDER BY COUNT(pl) DESC")
     fun findBestPosts(pageable: Pageable): List<Post>
+    @Query(
+        value = "SELECT * FROM post WHERE board_board_id = :boardId ORDER BY RAND() LIMIT :cnt",
+        nativeQuery = true
+    )
+    fun getRandomPostsByBoardAndCount(boardId: Long, cnt: Int): List<Post>
 
     fun findPostsByBoard(board: Board, pageable: Pageable): Page<Post>
     fun findPostsByCreator(user: User): List<Post>

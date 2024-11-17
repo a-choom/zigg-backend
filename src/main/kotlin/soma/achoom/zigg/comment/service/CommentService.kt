@@ -56,7 +56,7 @@ class CommentService(
 
         commentRepository.save(comment)
 
-        return commentRepository.findCommentsByPost(post).filter { it.commentType == CommentType.COMMENT}.map{
+        return commentRepository.findCommentsByPost(post).filter { it.commentType == CommentType.COMMENT }.map{
             generateCommentResponse(it,user)
         }
     }
