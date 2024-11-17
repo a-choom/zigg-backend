@@ -15,5 +15,4 @@ interface SpaceRepository : JpaRepository<Space, Long> {
     fun findSpaceByHistoriesContains(history: History): Space?
     @Query("select s from space s where s in (select spaceUser.space from SpaceUser spaceUser where spaceUser.user = :user and spaceUser.withdraw = false)")
     fun findSpacesByUser(user: User) : List<Space>
-
 }
