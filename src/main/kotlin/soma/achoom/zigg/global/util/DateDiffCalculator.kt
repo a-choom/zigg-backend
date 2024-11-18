@@ -5,9 +5,9 @@ import java.time.temporal.ChronoUnit
 
 class DateDiffCalculator {
     companion object{
-        fun calculateDateDiffByDate(after : LocalDateTime , before: LocalDateTime) : Long {
-            val daysBetween: Long = ChronoUnit.DAYS.between(after.toLocalDate(), before.toLocalDate())
-            return daysBetween
+        fun calculateDateDiffByDate(date1 : LocalDateTime , date2: LocalDateTime) : Long {
+            val daysBetween: Long = ChronoUnit.DAYS.between(date1.toLocalDate(), date2.toLocalDate())
+            return Math.abs(daysBetween)
         }
     }
 }

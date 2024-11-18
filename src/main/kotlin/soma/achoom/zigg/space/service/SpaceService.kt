@@ -52,6 +52,7 @@ class SpaceService(
         val user = userService.authenticationToUser(authentication)
         val spaceUsers =
             spaceUserRepository.findSpaceUsersByUser(user, PageRequest.of(page, RECENT_SPACE_PAGE_SIZE))
+        println(spaceUsers)
         val spaceResponseDto: MutableList<SpaceResponseDto> = mutableListOf()
         spaceUsers.map {
             var historyPerSpaceCount = 0
@@ -92,10 +93,11 @@ class SpaceService(
                 }
                 historyPerSpaceCount += 1
                 if (historyPerSpaceCount == RECENT_HISTORIES_PER_SPACE_NUM) {
-                    spaceResponseDto.add(recentSpaceInfo)
                     break
                 }
             }
+            spaceResponseDto.add(recentSpaceInfo)
+
         }
         return spaceResponseDto
     }
