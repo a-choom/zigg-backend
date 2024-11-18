@@ -294,9 +294,9 @@ class PostService(
     fun getCommentedPosts(authentication: Authentication): List<PostResponseDto> {
         val user = userService.authenticationToUser(authentication)
         val post = commentRepository.findCommentsByCreatorUser(user).filter { !it.isDeleted }.map { it.post }
-        return post.map {
+        return post.toSet().map {
             generatePostResponse(it, user)
-        }.toSet().toList()
+        }.toList()
     }
 
     @Transactional(readOnly = true)
