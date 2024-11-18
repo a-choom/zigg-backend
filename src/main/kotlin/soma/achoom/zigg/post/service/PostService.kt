@@ -305,7 +305,7 @@ class PostService(
         val posts = postRepository.findBestPosts(Pageable.ofSize(POST_BEST_SIZE))
         return posts.map {
             generatePostResponse(it, user)
-        }.toList()
+        }.toSet().toList()
     }
 
 

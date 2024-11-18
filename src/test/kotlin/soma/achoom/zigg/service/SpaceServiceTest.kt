@@ -17,13 +17,22 @@ import soma.achoom.zigg.TestConfig.Companion.PROFILE_IMAGE_KEY
 import soma.achoom.zigg.TestConfig.Companion.PROFILE_IMAGE_URL
 import soma.achoom.zigg.TestConfig.Companion.SPACE_IMAGE_KEY
 import soma.achoom.zigg.TestConfig.Companion.SPACE_IMAGE_URL
+import soma.achoom.zigg.content.entity.Image
+import soma.achoom.zigg.content.entity.Video
 import soma.achoom.zigg.data.DummyDataUtil
+import soma.achoom.zigg.history.dto.HistoryRequestDto
+import soma.achoom.zigg.history.entity.History
+import soma.achoom.zigg.history.repository.HistoryRepository
+import soma.achoom.zigg.history.service.HistoryService
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.space.dto.SpaceRequestDto
 import soma.achoom.zigg.space.exception.SpaceNotFoundException
 import soma.achoom.zigg.space.service.SpaceService
 import soma.achoom.zigg.space.dto.SpaceUserRequestDto
+import soma.achoom.zigg.space.entity.Space
 import soma.achoom.zigg.space.entity.SpaceRole
+import soma.achoom.zigg.space.entity.SpaceUser
+import soma.achoom.zigg.space.repository.SpaceRepository
 import soma.achoom.zigg.space.repository.SpaceUserRepository
 import soma.achoom.zigg.user.entity.User
 import soma.achoom.zigg.user.repository.UserRepository
@@ -32,6 +41,15 @@ import soma.achoom.zigg.user.repository.UserRepository
 @ActiveProfiles("test")
 @Transactional
 class SpaceServiceTest {
+
+    @Autowired
+    private lateinit var spaceRepository: SpaceRepository
+
+    @Autowired
+    private lateinit var historyRepository: HistoryRepository
+
+    @Autowired
+    private lateinit var historyService: HistoryService
 
     @Autowired
     private lateinit var spaceUserRepository: SpaceUserRepository
@@ -58,7 +76,7 @@ class SpaceServiceTest {
         Mockito.`when`(s3Service.getPreSignedGetUrl(anyString())).thenReturn(SPACE_IMAGE_URL)
 
         admin = dummyDataUtil.createDummyUser()
-        for (i in 0 until 10){
+        for (i in 0 until 10) {
             userList.add(dummyDataUtil.createDummyUserWithMultiFCMToken(3))
         }
         userRepository.saveAll(userList)
@@ -122,6 +140,7 @@ class SpaceServiceTest {
         assert(updateResponse.spaceName == updateSpaceRequestDto.spaceName)
         println(updateResponse.toString())
     }
+
     @Test
     fun `delete Space Test`() {
         // given
@@ -141,12 +160,13 @@ class SpaceServiceTest {
         assertThrows<SpaceNotFoundException>(
             message = "존재하지 않는 공간입니다."
         ) {
-            spaceService.getSpace(adminAuth,response.spaceId!!)
+            spaceService.getSpace(adminAuth, response.spaceId!!)
         }
         assert(spaceUserRepository.findSpaceUserBySpaceUserId(response.spaceId!!) == null)
     }
+
     @Test
-    fun `withdraw Space Test`(){
+    fun `withdraw Space Test`() {
         // given
         val adminAuth = dummyDataUtil.createDummyAuthentication(admin)
         val spaceRequestDto = SpaceRequestDto(
@@ -168,5 +188,48 @@ class SpaceServiceTest {
         val spaces = spaceService.getSpaces(adminAuth)
         // then
         assert(spaces.isEmpty())
+    }
+
+    @Test
+    fun `get recent space`() {
+        val adminAuth = dummyDataUtil.createDummyAuthentication(admin)
+        val spaceRequestDto = SpaceRequestDto(
+            spaceName = "testSpace",
+            spaceImageUrl = SPACE_IMAGE_URL,
+            spaceUsers = mutableListOf(),
+            spaceId = null
+        )
+        val space = spaceRepository.save(
+            Space(
+                name = "Test",
+                imageKey = Image(
+                    admin,
+                    "test"
+                ),
+                histories = mutableSetOf(
+                    History(
+                        name = "Test",
+                        videoKey = Video(
+                            videoKey = "tst",
+                            duration = "10:11:11",
+                            uploader = admin
+                        ),
+                        videoThumbnailUrl = Image(
+                            imageKey = "tst",
+                            uploader = admin
+                        )
+                    )
+                )
+            )
+        )
+        val spaceUser = spaceUserRepository.save(
+            SpaceUser(
+                user = admin,
+                space = space
+            )
+        )
+        val response = spaceService.getRecentSpaceInfos(adminAuth, 0)
+        assert(response.isNotEmpty())
+        println(response)
     }
 }
