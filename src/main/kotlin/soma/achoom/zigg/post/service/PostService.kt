@@ -171,6 +171,9 @@ class PostService(
                     duration = it.videoDuration
                 )
             }
+        } ?: run {
+            post.videoThumbnail = null
+            post.videoContent = null
         }
         /*
             요청 이미지 키 중 동일한 키가 이미 post에 존재할 때 요청 이미지 키에서 제거
