@@ -21,6 +21,7 @@ class TestConfig {
     @Autowired
     private lateinit var userRepository: UserRepository
 
+
     companion object {
         const val SPACE_IMAGE_KEY = "space-image-key"
         const val PROFILE_IMAGE_KEY = "profile-image-key"
