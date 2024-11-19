@@ -34,5 +34,8 @@ class Video private constructor(
             val videoKey = S3UrlParser.extractionKeyFromUrl(videoUrl)
             return Video(uploader = uploader, videoKey = videoKey, duration = duration)
         }
+        fun fromKey(videoKey : String,uploader: User ,duration: String) : Video{
+            return Video(uploader = uploader, videoKey = videoKey, duration = duration)
+        }
     }
 }

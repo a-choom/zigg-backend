@@ -32,5 +32,8 @@ class Image private constructor(
             val imageKey = S3UrlParser.extractionKeyFromUrl(imageUrl)
             return Image(uploader = uploader, imageKey = imageKey)
         }
+        fun fromKey(imageKey: String,uploader: User) : Image{
+            return Image(uploader = uploader, imageKey = imageKey)
+        }
     }
 }
