@@ -165,33 +165,34 @@ class PostService(
                 post.videoThumbnail = postRequestDto.postVideoThumbnail?.let { thumbnailUrl ->
                     Image.fromUrl(uploader = user, imageUrl = thumbnailUrl)
                 }
-                post.videoContent = Video.fromUrl(
+                post.videoContent = Video.fromKey(
                     uploader = user,
-                    videoUrl = extractedVideoKey,
+                    videoKey = extractedVideoKey,
                     duration = it.videoDuration
                 )
             }
-        } ?: run {
-            post.videoContent = null
-            post.videoThumbnail = null
         }
-
+        /*
+            요청 이미지 키 중 동일한 키가 이미 post에 존재할 때 요청 이미지 키에서 제거
+         */
         val newKeys = postRequestDto.postImageContent.map(S3UrlParser::extractionKeyFromUrl)
         post.imageContents.retainAll { it.imageKey in newKeys }
 
         newKeys.forEach { key ->
             if (post.imageContents.none { it.imageKey == key }) {
                 post.imageContents.add(
-                    Image.fromUrl(uploader = user, imageUrl = key)
+                    Image.fromKey(uploader = user, imageKey = key)
                 )
             }
         }
+        /*
 
+         */
         postRequestDto.postImageContent.forEach { imageUrl ->
             val imageKey = S3UrlParser.extractionKeyFromUrl(imageUrl)
             if (post.imageContents.none { it.imageKey == imageKey }) {
                 post.imageContents.add(
-                    Image.fromUrl(uploader = user, imageUrl = imageKey)
+                    Image.fromKey(uploader = user, imageKey = imageKey)
                 )
             }
         }
