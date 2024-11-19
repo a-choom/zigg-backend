@@ -9,6 +9,7 @@ import soma.achoom.zigg.comment.exception.*
 import soma.achoom.zigg.content.exception.ImageNotfoundException
 import soma.achoom.zigg.feedback.exception.FeedbackNotFoundException
 import soma.achoom.zigg.firebase.exception.FCMMessagingFailException
+import soma.achoom.zigg.global.exception.S3UrlFormatUnMatchException
 import soma.achoom.zigg.history.exception.GuestHistoryCreateLimitationException
 import soma.achoom.zigg.history.exception.HistoryNotFoundException
 import soma.achoom.zigg.invite.exception.InviteExpiredException
@@ -141,6 +142,10 @@ class GlobalExceptionHandler {
     }
     @ExceptionHandler(AlreadyLikedPostException::class)
     fun handlerAlreadyLikedPostException(e : AlreadyLikedPostException):ResponseEntity<Any>{
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
+    }
+    @ExceptionHandler(S3UrlFormatUnMatchException::class)
+    fun handlerS3UrlFormatUnMatchException(e : S3UrlFormatUnMatchException):ResponseEntity<Any>{
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.message)
     }
 }
