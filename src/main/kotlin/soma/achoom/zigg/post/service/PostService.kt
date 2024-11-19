@@ -176,8 +176,15 @@ class PostService(
             post.videoThumbnail = null
         }
 
-        post.imageContents.removeIf { existingImage ->
-            existingImage.imageKey !in postRequestDto.postImageContent.map(S3UrlParser::extractionKeyFromUrl)
+        val newKeys = postRequestDto.postImageContent.map(S3UrlParser::extractionKeyFromUrl)
+        post.imageContents.retainAll { it.imageKey in newKeys }
+
+        newKeys.forEach { key ->
+            if (post.imageContents.none { it.imageKey == key }) {
+                post.imageContents.add(
+                    Image.fromUrl(uploader = user, imageUrl = key)
+                )
+            }
         }
 
         postRequestDto.postImageContent.forEach { imageUrl ->
