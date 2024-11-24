@@ -7,7 +7,7 @@ import soma.achoom.zigg.history.dto.UploadContentTypeRequestDto
 import soma.achoom.zigg.post.dto.PostRequestDto
 import soma.achoom.zigg.post.dto.PostResponseDto
 import soma.achoom.zigg.post.service.PostService
-import soma.achoom.zigg.s3.service.S3DataType
+import soma.achoom.zigg.s3.entity.S3DataType
 import soma.achoom.zigg.s3.service.S3Service
 import java.util.*
 

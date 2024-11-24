@@ -1,7 +1,6 @@
 package soma.achoom.zigg.user.controller
 
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -16,9 +15,8 @@ import soma.achoom.zigg.auth.dto.OAuth2MetaDataRequestDto
 import soma.achoom.zigg.auth.dto.OAuth2UserRequestDto
 import soma.achoom.zigg.auth.service.AuthenticationService
 import soma.achoom.zigg.firebase.dto.FCMTokenRequestDto
-import soma.achoom.zigg.global.ResponseDtoManager
 import soma.achoom.zigg.history.dto.UploadContentTypeRequestDto
-import soma.achoom.zigg.s3.service.S3DataType
+import soma.achoom.zigg.s3.entity.S3DataType
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.user.dto.UserExistsResponseDto
 import soma.achoom.zigg.user.dto.UserRequestDto

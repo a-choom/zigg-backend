@@ -209,4 +209,20 @@ class PostServiceTest {
 //        val postWithComments = postService.getPost(auth, board.boardId!!, postResponse.postId)
 //        assert(postWithComments.comments?.size == 3)
     }
+    @Test
+    fun `post 200 line text`(){
+        val user = dummyDataUtil.createDummyUser()
+        val auth = dummyDataUtil.createDummyAuthentication(user)
+        val postResponse = postService.createPost(
+            auth, board.boardId!!, PostRequestDto(
+                postTitle = "test post",
+                postMessage = "* 테스터에서 웹뷰말고 Link로\n" +
+                        "* 히스토리에서 신기환폰 튕김\n" +
+                        "* 영상 업로드중에 나가면 경고 및 취소\n" +
+                        "* 커뮤니티 비디오플레이어 회전 안됨\n" +
+                        "* 커뮤니티에서 북마크, 좋아요누르면 영상 다시 로드됨\n" +
+                        "* 커뮤니티에서 모달창 위치 이상"
+            )
+        )
+    }
 }
