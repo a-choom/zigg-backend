@@ -1,5 +1,6 @@
 package soma.achoom.zigg.post.entity
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import soma.achoom.zigg.board.entity.Board
 import soma.achoom.zigg.content.entity.Image
@@ -14,6 +15,7 @@ class Post(
     val postId: Long? = null,
 
     @ManyToOne(cascade = [CascadeType.MERGE], fetch = FetchType.LAZY)
+    @JsonIgnore
     val board: Board,
 
     @ManyToOne

@@ -16,4 +16,7 @@ interface UserRepository : JpaRepository<User, Long> {
     fun findUserByUserId(userId:Long): User?
     @Query("SELECT u FROM User u WHERE u.name LIKE :userName%")
     fun findUsersByUserNameLike(userName:String, pageable: Pageable): List<User>
+
+    @Query("SELECT u FROM User u JOIN u.ignoreUsers ignoredUser WHERE ignoredUser.userId = :userId")
+    fun findUsersWhoBlockedUser(userId: Long): List<User>
 }

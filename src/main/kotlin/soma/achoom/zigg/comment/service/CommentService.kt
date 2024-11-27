@@ -159,11 +159,11 @@ class CommentService(
         return CommentResponseDto(
             commentId = comment.commentId,
             commentLike = comment.likes,
-            commentMessage = if(comment.isDeleted) "삭제된 메세지입니다." else comment.textComment,
+            commentMessage = if(comment.isDeleted) "삭제된 메세지입니다." else if (comment.creator.user in user.ignoreUsers) "차단된 유저입니다." else comment.textComment,
             commentCreator = UserResponseDto(
                 userId = comment.creator.user?.userId,
-                userName = if(comment.isDeleted || comment.creator.user == null) "알수없음" else if (comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user?.name,
-                profileImageUrl = if (comment.isDeleted || comment.creator.anonymous || comment.creator.user == null) null else s3Service.getPreSignedGetUrl(comment.creator.user?.profileImageKey?.imageKey),
+                userName = if(comment.isDeleted || comment.creator.user == null) "알수없음" else if (comment.creator.user in user.ignoreUsers) "차단된 유저입니다." else if (comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user?.name,
+                profileImageUrl = if (comment.isDeleted || comment.creator.anonymous || comment.creator.user == null || comment.creator.user in user.ignoreUsers) null else s3Service.getPreSignedGetUrl(comment.creator.user?.profileImageKey?.imageKey),
             ),
             createdAt = comment.createAt,
             isAnonymous = comment.creator.anonymous,
@@ -172,11 +172,11 @@ class CommentService(
                 CommentResponseDto(
                     commentId = reply.commentId,
                     commentLike = reply.likes,
-                    commentMessage = if(reply.isDeleted) "삭제된 메세지입니다." else reply.textComment,
+                    commentMessage = if(reply.isDeleted) "삭제된 메세지입니다." else if (reply.creator.user in user.ignoreUsers) "차단된 유저입니다." else reply.textComment,
                     commentCreator = UserResponseDto(
                         userId = reply.creator.user?.userId,
-                        userName = if(reply.creator.user == null || reply.isDeleted) "알수없음" else if(reply.creator.anonymous) reply.creator.anonymousName else reply.creator.user?.name,
-                        profileImageUrl = if(reply.isDeleted || reply.creator.anonymous || reply.creator.user == null) null else s3Service.getPreSignedGetUrl(reply.creator.user?.profileImageKey?.imageKey)
+                        userName = if(reply.creator.user == null || reply.isDeleted) "알수없음" else if (reply.creator.user in user.ignoreUsers) "차단된 유저입니다." else if(reply.creator.anonymous) reply.creator.anonymousName else reply.creator.user?.name,
+                        profileImageUrl = if(reply.isDeleted || reply.creator.anonymous || reply.creator.user == null || reply.creator.user in user.ignoreUsers) null else s3Service.getPreSignedGetUrl(reply.creator.user?.profileImageKey?.imageKey)
                     ),
                     createdAt = reply.createAt,
                     isAnonymous = reply.creator.anonymous,
