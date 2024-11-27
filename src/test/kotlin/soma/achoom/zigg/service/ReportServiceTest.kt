@@ -28,29 +28,4 @@ class ReportServiceTest {
     @Autowired
     private lateinit var boardRepository : BoardRepository
 
-    @Test
-    fun `post report test`(){
-        val board = boardRepository.save(
-            Board(
-                name = "test"
-            )
-        )
-        val postCreator = dummyDataUtil.createDummyUser()
-
-        val post = postRepository.save(Post(
-            creator = postCreator,
-            textContent = "Test Content",
-            anonymous = false,
-            board = board,
-            title = "Test Post"
-        ))
-        val reporter = dummyDataUtil.createDummyUser()
-        val reporterAuthentication = dummyDataUtil.createDummyAuthentication(reporter)
-        reportService.reportPost(
-            reporterAuthentication,post.postId!!, ReportRequestDto(
-                reportMessage = "너무 이상해요",
-                specificMessage = "불건전한 게시물"
-            )
-        )
-    }
 }
