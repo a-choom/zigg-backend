@@ -56,12 +56,13 @@ class PostService(
         private const val POST_RANDOM_POST = 2
     }
 
+
     @Transactional(readOnly = true)
     fun getRandomPostsFromBoard(authentication: Authentication, boardId: Long) : List<PostResponseDto>{
         val user = userService.authenticationToUser(authentication)
         boardRepository.findById(boardId).orElseThrow{BoardNotFoundException()}
         val posts = postRepository.getRandomPostsByBoardAndCount(boardId, PageRequest.of(0, POST_RANDOM_POST))
-        return posts.map { generatePostResponse(it,user) }
+        return posts.filter{it.creator !in user.ignoreUsers}.map { generatePostResponse(it,user) }
     }
 
     @Transactional(readOnly = false)
@@ -108,7 +109,7 @@ class PostService(
         val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
         val sort = Sort.by(Sort.Order.desc("createAt"))
         val posts = postRepository.findPostsByBoard(board, PageRequest.of(page, POST_PAGE_SIZE, sort))
-        return posts.map {
+        return posts.filter{it.creator !in user.ignoreUsers}.map {
             generatePostResponse(it, user)
         }.toList()
 
@@ -137,7 +138,7 @@ class PostService(
             keyword,
             PageRequest.of(page, POST_PAGE_SIZE, sort)
         )
-        return posts.map {
+        return posts.filter{it.creator !in user.ignoreUsers}.map {
             generatePostResponse(it, user)
         }.toList()
     }
@@ -314,7 +315,7 @@ class PostService(
     fun getPopularPosts(authentication: Authentication): List<PostResponseDto> {
         val user = userService.authenticationToUser(authentication)
         val posts = postRepository.findBestPosts(Pageable.ofSize(POST_BEST_SIZE))
-        return posts.map {
+        return posts.filter{it.creator !in user.ignoreUsers}.map {
             generatePostResponse(it, user)
         }.toSet().toList()
     }

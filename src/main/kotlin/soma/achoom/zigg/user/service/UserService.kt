@@ -44,8 +44,9 @@ class UserService(
 ) {
     @Transactional(readOnly = true)
     fun searchUser(authentication: Authentication, nickname: String): List<UserResponseDto> {
+        val user = authenticationToUser(authentication)
         val users = userRepository.findUsersByUserNameLike(nickname,PageRequest.of(0,10))
-        return users.filter { it.nickname != authenticationToUser(authentication).nickname }.map {
+        return users.filter { it.nickname != authenticationToUser(authentication).nickname || it !in user.ignoreUsers || user !in it.ignoreUsers}.map {
             UserResponseDto(
                 userId = it.userId,
                 userName = it.name,
@@ -165,6 +166,10 @@ class UserService(
         postScrapRepository.deletePostScrapsByUser(user)
         commentLikeRepository.deleteCommentLikesByUser(user)
         postLikeRepository.deletePostLikesByUser(user)
+        userRepository.findUsersWhoBlockedUser(user.userId!!).forEach{
+            it.ignoreUsers.remove(user)
+            userRepository.save(it)
+        }
         userRepository.delete(user)
     }
     @Transactional(readOnly = false)
