@@ -52,9 +52,8 @@ class SpaceService(
         val user = userService.authenticationToUser(authentication)
         val spaceUsers =
             spaceUserRepository.findSpaceUsersByUser(user, PageRequest.of(page, RECENT_SPACE_PAGE_SIZE))
-        println(spaceUsers)
         val spaceResponseDto: MutableList<SpaceResponseDto> = mutableListOf()
-        spaceUsers.map {
+        spaceUsers.filter { it.withdraw.not() }. map {
             var historyPerSpaceCount = 0
             val recentSpaceInfo = SpaceResponseDto(
                 spaceId = it.space.spaceId,
@@ -476,7 +475,12 @@ class SpaceService(
     @Transactional(readOnly = false)
     fun validateSpaceUser(user: User, space: Space): SpaceUser {
         spaceUserRepository.findSpaceUserBySpaceAndUser(space, user)?.let {
-            return it
+            if(it.withdraw){
+                throw SpaceUserNotFoundInSpaceException()
+            }
+            else{
+                return it
+            }
         }
         throw SpaceUserNotFoundInSpaceException()
     }

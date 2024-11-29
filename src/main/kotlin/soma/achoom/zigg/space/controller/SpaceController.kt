@@ -4,7 +4,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import soma.achoom.zigg.history.dto.UploadContentTypeRequestDto
-import soma.achoom.zigg.s3.service.S3DataType
+import soma.achoom.zigg.s3.entity.S3DataType
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.invite.dto.InviteRequestDto
 import soma.achoom.zigg.space.dto.SpaceReferenceUrlRequestDto

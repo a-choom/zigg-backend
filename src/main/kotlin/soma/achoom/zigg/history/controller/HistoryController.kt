@@ -11,12 +11,11 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import soma.achoom.zigg.global.ResponseDtoManager
 import soma.achoom.zigg.history.dto.HistoryRequestDto
 import soma.achoom.zigg.history.dto.HistoryResponseDto
 import soma.achoom.zigg.history.dto.UploadContentTypeRequestDto
 import soma.achoom.zigg.history.service.HistoryService
-import soma.achoom.zigg.s3.service.S3DataType
+import soma.achoom.zigg.s3.entity.S3DataType
 import soma.achoom.zigg.s3.service.S3Service
 import java.util.UUID
 
