@@ -44,7 +44,8 @@ class ReportService(
                 PostReportMetaDto(
                     postId = post.postId!!,
                     userId = post.creator?.userId!!,
-                    contents = post.imageContents.map { it.imageId!! } + post.videoContent?.videoId!!,
+                    imageContent = post.imageContents.map { it.imageId!! },
+                    videoContent = post.videoContent?.videoId,
                     textContent = post.textContent
                 )
             )
