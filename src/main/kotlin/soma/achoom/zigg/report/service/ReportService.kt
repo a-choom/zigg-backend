@@ -9,8 +9,10 @@ import soma.achoom.zigg.comment.exception.CommentNotFoundException
 import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.post.exception.PostNotFoundException
 import soma.achoom.zigg.post.repository.PostRepository
-import soma.achoom.zigg.post.service.PostService
+import soma.achoom.zigg.report.dto.CommentReportMetaDto
+import soma.achoom.zigg.report.dto.PostReportMetaDto
 import soma.achoom.zigg.report.dto.ReportRequestDto
+import soma.achoom.zigg.report.dto.UserReportMetaDto
 import soma.achoom.zigg.report.entity.Report
 import soma.achoom.zigg.report.entity.ReportType
 import soma.achoom.zigg.report.repository.ReportRepository
@@ -31,14 +33,21 @@ class ReportService(
     private val objectMapper: ObjectMapper,
     private val userService: UserService,
 
-) {
+    ) {
 
     @Transactional(readOnly = false)
     fun reportPost(authentication: Authentication, postId: Long, reportRequestDto: ReportRequestDto) {
         ObjectMapper().apply {
             registerModule(JavaTimeModule())
             val post = postRepository.findById(postId).getOrElse { throw PostNotFoundException() }
-            val postJsonData = objectMapper.writeValueAsString(post)
+            val postJsonData = objectMapper.writeValueAsString(
+                PostReportMetaDto(
+                    postId = post.postId!!,
+                    userId = post.creator?.userId!!,
+                    contents = post.imageContents.map { it.imageId!! } + post.videoContent?.videoId!!,
+                    textContent = post.textContent
+                )
+            )
             println(postJsonData)
             reportRepository.save(
                 Report(
@@ -58,7 +67,12 @@ class ReportService(
         }
         val reporter = userService.authenticationToUser(authentication)
         val user = userRepository.findById(userId).getOrElse { throw UserNotFoundException() }
-        val userJsonData = objectMapper.writeValueAsString(user)
+        val userJsonData = objectMapper.writeValueAsString(
+            UserReportMetaDto(
+                userId = user.userId!!,
+                profileImage = user.profileImageKey.imageId!!
+            )
+        )
         println(userJsonData)
         reportRepository.save(
             Report(
@@ -78,7 +92,13 @@ class ReportService(
             registerModule(JavaTimeModule())
         }
         val comment = commentRepository.findById(commentId).getOrElse { throw CommentNotFoundException() }
-        val commentJsonData = objectMapper.writeValueAsString(comment)
+        val commentJsonData = objectMapper.writeValueAsString(
+            CommentReportMetaDto(
+                userId = comment.creator.user?.userId!!,
+                commentId = comment.commentId!!,
+                textContent = comment.textComment
+            )
+        )
         println(commentJsonData)
         reportRepository.save(
             Report(
