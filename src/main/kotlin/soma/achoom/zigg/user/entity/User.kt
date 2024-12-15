@@ -1,46 +1,69 @@
 package soma.achoom.zigg.user.entity
 
 import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
-import soma.achoom.zigg.global.util.BaseEntity
+import org.checkerframework.checker.units.qual.C
+import soma.achoom.zigg.global.BaseEntity
 import soma.achoom.zigg.auth.dto.OAuthProviderEnum
+import soma.achoom.zigg.content.entity.Image
+import soma.achoom.zigg.firebase.entity.FCMToken
+import soma.achoom.zigg.invite.entity.Invite
+import soma.achoom.zigg.post.entity.PostLike
+import soma.achoom.zigg.post.entity.PostScrap
+import soma.achoom.zigg.space.entity.SpaceUser
 import java.util.*
 
 
 @Entity
-@Table(name = "user")
-data class User(
+@Table(name = "`user`")
+class User(
     @Id
-    var userId: UUID = UUID.randomUUID(),
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    var userId: Long? = null,
 
-    var userName: String? = null,
+    // 활동명
+    @Column(name = "name")
+    var name: String? = null,
+    // 고유한 닉네임
+    @Column(name = "nickname")
+    var nickname: String? = null,
 
-    var userNickname: String? = null,
+    @Column(name = "description")
+    var description: String? = "",
+
+    @Column(name = "tags")
+    var tags : String? = "",
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "user_role")
     var role: UserRole = UserRole.USER,
 
-    var profileImageKey: String? = null,
+    @ManyToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
+    var profileImageKey: Image,
+
+    @ManyToOne(cascade = [CascadeType.PERSIST,CascadeType.MERGE])
+    var profileBannerImageKey : Image? = null,
 
     @Enumerated(EnumType.STRING)
     var platform: OAuthProviderEnum,
 
     @JsonBackReference
+    @JsonIgnore
     var providerId: String,
 
     @JsonBackReference
+    @JsonIgnore
     var jwtToken: String,
 
-    @Column(name = "is_deleted")
-    var isDeleted: Boolean = false
+    @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonIgnore
+    var deviceTokens : MutableSet<FCMToken> = mutableSetOf(),
 
-) : BaseEntity(){
-    override fun equals(other: Any?): Boolean {
-        return providerId == (other as User).providerId
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JsonIgnore
+    val ignoreUsers: MutableList<User> = mutableListOf()
+    ) : BaseEntity(){
 
-    }
-    override fun hashCode(): Int {
-        return Objects.hash(userId)
-    }
 
 }

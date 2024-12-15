@@ -1,24 +1,27 @@
 package soma.achoom.zigg.user.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import soma.achoom.zigg.user.entity.User
-import java.util.UUID
+import java.time.LocalDateTime
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class UserResponseDto(
-    val userId: UUID?,
+    val userId: Long? = null,
     val userName: String?,
-    val userNickname: String?,
-    val profileImageUrl: String?
+    val userNickname: String? = null,
+    val profileImageUrl: String?,
+    val profileBannerImageUrl:String? = null,
+    val userTags : String? = null,
+    val userDescription: String? = null,
+    val createdAt:LocalDateTime? = null,
+
 )  {
-    companion object {
-        fun from(user: User): UserResponseDto {
-            return UserResponseDto(
-                userId = user.userId,
-                userNickname = user.userNickname,
-                userName = user.userName,
-                profileImageUrl = user.profileImageKey
-            )
-        }
+
+    override fun toString(): String {
+        return "UserResponseDto(\n" +
+                "userId=$userId,\n" +
+                "userName=$userName,\n" +
+                "userNickname=$userNickname,\n" +
+                "profileImageUrl=$profileImageUrl\n" +
+                ")\n"
     }
 }
