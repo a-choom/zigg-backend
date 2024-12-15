@@ -1,5 +1,6 @@
 package soma.achoom.zigg.comment.entity
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import soma.achoom.zigg.global.BaseEntity
 import soma.achoom.zigg.post.entity.Post
@@ -12,9 +13,11 @@ class CommentCreator(
     val id: Long? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
-    val user : User,
+    @JsonIgnore
+    var user : User?,
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     val post: Post,
 
     @Column(name = "is_anonymous")
@@ -22,7 +25,4 @@ class CommentCreator(
 
     var anonymousName : String? = null
 
-) : BaseEntity(){
-
-
-}
+) : BaseEntity()

@@ -10,6 +10,7 @@ import soma.achoom.zigg.board.entity.Board
 import soma.achoom.zigg.board.repository.BoardRepository
 import soma.achoom.zigg.comment.entity.Comment
 import soma.achoom.zigg.comment.entity.CommentCreator
+import soma.achoom.zigg.comment.entity.CommentType
 import soma.achoom.zigg.comment.repository.CommentRepository
 import soma.achoom.zigg.data.DummyDataUtil
 import soma.achoom.zigg.post.entity.Post
@@ -68,9 +69,11 @@ class CommentRepositoryTest {
                     anonymous = false,
                 ),
                 textComment = "child comment",
-                post = post
+                post = post,
+                commentType = CommentType.REPLY
             )),
-            post = post
+            post = post,
+            commentType = CommentType.COMMENT
         )
         commentRepository.save(parentComment)
 
@@ -110,9 +113,11 @@ class CommentRepositoryTest {
                     anonymous = false,
                 ),
                 textComment = "child comment",
-                post = post
+                post = post,
+                commentType = CommentType.REPLY
             )),
-            post = post
+            post = post,
+            commentType = CommentType.COMMENT
         )
         commentRepository.save(parentComment)
 

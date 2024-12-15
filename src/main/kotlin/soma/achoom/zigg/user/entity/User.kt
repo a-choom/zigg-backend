@@ -1,6 +1,7 @@
 package soma.achoom.zigg.user.entity
 
 import com.fasterxml.jackson.annotation.JsonBackReference
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import org.checkerframework.checker.units.qual.C
 import soma.achoom.zigg.global.BaseEntity
@@ -27,8 +28,10 @@ class User(
     // 고유한 닉네임
     @Column(name = "nickname")
     var nickname: String? = null,
+
     @Column(name = "description")
     var description: String? = "",
+
     @Column(name = "tags")
     var tags : String? = "",
 
@@ -46,15 +49,20 @@ class User(
     var platform: OAuthProviderEnum,
 
     @JsonBackReference
+    @JsonIgnore
     var providerId: String,
 
     @JsonBackReference
+    @JsonIgnore
     var jwtToken: String,
 
     @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+    @JsonIgnore
     var deviceTokens : MutableSet<FCMToken> = mutableSetOf(),
 
-
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JsonIgnore
+    val ignoreUsers: MutableList<User> = mutableListOf()
     ) : BaseEntity(){
 
 

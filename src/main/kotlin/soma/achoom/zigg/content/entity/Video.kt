@@ -3,6 +3,7 @@ package soma.achoom.zigg.content.entity
 import jakarta.persistence.*
 import org.jetbrains.annotations.TestOnly
 import soma.achoom.zigg.global.BaseEntity
+import soma.achoom.zigg.global.util.S3UrlParser
 import soma.achoom.zigg.user.entity.User
 
 @Entity(name = "video")
@@ -30,10 +31,10 @@ class Video private constructor(
     )
     companion object {
         fun fromUrl(videoUrl: String, uploader: User, duration: String): Video {
-            val videoKey = videoUrl.split("?")[0]
-                .split("/")
-                .subList(3, videoUrl.split("?")[0].split("/").size)
-                .joinToString("/")
+            val videoKey = S3UrlParser.extractionKeyFromUrl(videoUrl)
+            return Video(uploader = uploader, videoKey = videoKey, duration = duration)
+        }
+        fun fromKey(videoKey : String,uploader: User ,duration: String) : Video{
             return Video(uploader = uploader, videoKey = videoKey, duration = duration)
         }
     }

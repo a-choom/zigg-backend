@@ -1,25 +1,32 @@
 package soma.achoom.zigg.post.service
 
+import org.springframework.boot.LazyInitializationExcludeFilter
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import soma.achoom.zigg.board.exception.BoardNotFoundException
 import soma.achoom.zigg.board.repository.BoardRepository
 import soma.achoom.zigg.comment.dto.CommentResponseDto
 import soma.achoom.zigg.comment.entity.Comment
+import soma.achoom.zigg.comment.entity.CommentType
+import soma.achoom.zigg.comment.repository.CommentLikeRepository
 import soma.achoom.zigg.comment.repository.CommentRepository
+import soma.achoom.zigg.comment.service.CommentService
 import soma.achoom.zigg.content.dto.ImageResponseDto
 import soma.achoom.zigg.content.dto.VideoResponseDto
 import soma.achoom.zigg.content.entity.Image
 import soma.achoom.zigg.content.entity.Video
+import soma.achoom.zigg.global.util.S3UrlParser
 import soma.achoom.zigg.history.repository.HistoryRepository
 import soma.achoom.zigg.post.dto.PostRequestDto
 import soma.achoom.zigg.post.dto.PostResponseDto
 import soma.achoom.zigg.post.entity.Post
 import soma.achoom.zigg.post.entity.PostLike
 import soma.achoom.zigg.post.entity.PostScrap
-import soma.achoom.zigg.post.exception.PostCreatorMismatchException
+import soma.achoom.zigg.post.exception.*
 import soma.achoom.zigg.post.repository.PostLikeRepository
 import soma.achoom.zigg.post.repository.PostRepository
 import soma.achoom.zigg.post.repository.PostScrapRepository
@@ -37,12 +44,35 @@ class PostService(
     private val postLikeRepository: PostLikeRepository,
     private val postScrapRepository: PostScrapRepository,
     private val s3Service: S3Service,
-    private val commentRepository: CommentRepository
+    private val commentRepository: CommentRepository,
+    private val commentLikeRepository: CommentLikeRepository,
+    private val commentService: CommentService
 ) {
+
+    companion object {
+        private const val POST_PAGE_SIZE = 15
+        private const val POST_BEST_SIZE = 2
+        private const val POST_IMAGE_MAX = 5
+        private const val POST_RANDOM_POST = 2
+    }
+
+
+    @Transactional(readOnly = true)
+    fun getRandomPostsFromBoard(authentication: Authentication, boardId: Long) : List<PostResponseDto>{
+        val user = userService.authenticationToUser(authentication)
+        boardRepository.findById(boardId).orElseThrow{BoardNotFoundException()}
+        val posts = postRepository.getRandomPostsByBoardAndCount(boardId, PageRequest.of(0, POST_RANDOM_POST))
+        return posts.filter{it.creator !in user.ignoreUsers}.map { generatePostResponse(it,user) }
+    }
+
     @Transactional(readOnly = false)
     fun createPost(authentication: Authentication, boardId: Long, postRequestDto: PostRequestDto): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
-        val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
+        val board = boardRepository.findById(boardId).orElseThrow{BoardNotFoundException()}
+
+        if(postRequestDto.postImageContent.size > POST_IMAGE_MAX) {
+            throw PostImageContentMaximumException(POST_IMAGE_MAX)
+        }
 
         val history = postRequestDto.historyId?.let {
             historyRepository.findHistoryByHistoryId(it)
@@ -78,8 +108,8 @@ class PostService(
         val user = userService.authenticationToUser(authentication)
         val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
         val sort = Sort.by(Sort.Order.desc("createAt"))
-        val posts = postRepository.findPostsByBoard(board, PageRequest.of(page, 15, sort))
-        return posts.map {
+        val posts = postRepository.findPostsByBoard(board, PageRequest.of(page, POST_PAGE_SIZE, sort))
+        return posts.filter{it.creator !in user.ignoreUsers}.map {
             generatePostResponse(it, user)
         }.toList()
 
@@ -88,11 +118,9 @@ class PostService(
     @Transactional(readOnly = true)
     fun getPost(authentication: Authentication, boardId: Long, postId: Long): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
-        val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
-
+        val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
         val comments = commentRepository.findCommentsByPost(post)
         return generatePostResponse(post, comments, user)
-
     }
 
     @Transactional(readOnly = true)
@@ -104,9 +132,13 @@ class PostService(
     ): List<PostResponseDto> {
         val user = userService.authenticationToUser(authentication)
         val sort = Sort.by(Sort.Order.desc("createAt"))
-        val board = boardRepository.findById(boardId).orElseThrow { IllegalArgumentException("Board not found") }
-        val posts = postRepository.findPostsByBoardAndTitleContaining(board, keyword, PageRequest.of(page, 10, sort))
-        return posts.map {
+        val board = boardRepository.findById(boardId).orElseThrow { BoardNotFoundException() }
+        val posts = postRepository.findPostsByBoardAndTitleContaining(
+            board,
+            keyword,
+            PageRequest.of(page, POST_PAGE_SIZE, sort)
+        )
+        return posts.filter{it.creator !in user.ignoreUsers}.map {
             generatePostResponse(it, user)
         }.toList()
     }
@@ -115,69 +147,133 @@ class PostService(
     fun updatePost(authentication: Authentication, postId: Long, postRequestDto: PostRequestDto): PostResponseDto {
         val user = userService.authenticationToUser(authentication)
 
-        val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
+        val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
 
-        if (post.creator.userId != user.userId) {
+        if (postRequestDto.postImageContent.size > POST_IMAGE_MAX) {
+            throw PostImageContentMaximumException(POST_IMAGE_MAX)
+        }
+
+        if (post.creator?.userId != user.userId) {
             throw PostCreatorMismatchException()
         }
 
         post.title = postRequestDto.postTitle
         post.textContent = postRequestDto.postMessage
-        post.imageContents = postRequestDto.postImageContent.map {
-            Image.fromUrl(
-                uploader = post.creator, imageUrl = it
-            )
-        }.toMutableList()
-        post.videoContent = postRequestDto.postVideoContent?.let {
-            Video.fromUrl(
-                uploader = post.creator, videoUrl = it.videoKey, duration = it.videoDuration
-            )
+
+        postRequestDto.postVideoContent?.let {
+            val extractedVideoKey = S3UrlParser.extractionKeyFromUrl(it.videoKey)
+            if (post.videoContent?.videoKey != extractedVideoKey) {
+                post.videoThumbnail = postRequestDto.postVideoThumbnail?.let { thumbnailUrl ->
+                    Image.fromUrl(uploader = user, imageUrl = thumbnailUrl)
+                }
+                post.videoContent = Video.fromKey(
+                    uploader = user,
+                    videoKey = extractedVideoKey,
+                    duration = it.videoDuration
+                )
+            }
+        } ?: run {
+            post.videoThumbnail = null
+            post.videoContent = null
         }
-        post.videoThumbnail = postRequestDto.postVideoThumbnail?.let {
-            Image.fromUrl(
-                uploader = post.creator, imageUrl = it
-            )
+        /*
+            요청 이미지 키 중 동일한 키가 이미 post에 존재할 때 요청 이미지 키에서 제거
+         */
+        val newKeys = postRequestDto.postImageContent.map(S3UrlParser::extractionKeyFromUrl)
+        post.imageContents.retainAll { it.imageKey in newKeys }
+
+        newKeys.forEach { key ->
+            if (post.imageContents.none { it.imageKey == key }) {
+                post.imageContents.add(
+                    Image.fromKey(uploader = user, imageKey = key)
+                )
+            }
         }
+        /*
+
+         */
+        postRequestDto.postImageContent.forEach { imageUrl ->
+            val imageKey = S3UrlParser.extractionKeyFromUrl(imageUrl)
+            if (post.imageContents.none { it.imageKey == imageKey }) {
+                post.imageContents.add(
+                    Image.fromKey(uploader = user, imageKey = imageKey)
+                )
+            }
+        }
+
         postRepository.save(post)
         val comments = commentRepository.findCommentsByPost(post)
         return generatePostResponse(post, comments, user)
     }
 
+
     @Transactional(readOnly = false)
     fun deletePost(authentication: Authentication, postId: Long) {
         val user = userService.authenticationToUser(authentication)
-        val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
-        if (post.creator.userId != user.userId) {
+        val post = postRepository.findById(postId).orElseThrow { PostNotFoundException() }
+        if (post.creator?.userId != user.userId) {
             throw PostCreatorMismatchException()
         }
+        commentLikeRepository.deleteCommentLikesByCommentPost(post)
+        commentRepository.deleteCommentsByPost(post)
+        postLikeRepository.deletePostLikesByPost(post)
+        postScrapRepository.deletePostScrapsByPost(post)
         postRepository.delete(post)
     }
 
     @Transactional(readOnly = false)
-    fun likeOrUnlikePost(authentication: Authentication, postId: Long): PostResponseDto {
+    fun likePost(authentication: Authentication, boardId:Long, postId: Long): PostResponseDto{
         val user = userService.authenticationToUser(authentication)
-        val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
-        val postLike = postLikeRepository.findByPostAndUser(post, user)
-        if (postLike == null) {
-            postLikeRepository.save(PostLike(user = user, post = post))
-        } else {
-            postLikeRepository.delete(postLike)
+        val post = postRepository.findById(postId).orElseThrow{PostNotFoundException()}
+        if(postLikeRepository.existsPostLikeByPostAndUser(post,user)){
+            throw AlreadyLikedPostException()
         }
-        return generatePostResponse(post, user)
+        val postLike = PostLike(
+            post = post,
+            user = user
+        )
+        postLikeRepository.save(postLike)
+        return generatePostResponse(post,user)
     }
 
     @Transactional(readOnly = false)
-    fun scrapOrUnscrapPost(authentication: Authentication, postId: Long): PostResponseDto {
+    fun unlikePost(authentication: Authentication, boardId:Long, postId: Long): PostResponseDto{
         val user = userService.authenticationToUser(authentication)
-        val post = postRepository.findById(postId).orElseThrow { IllegalArgumentException("Post not found") }
-        val postScrap = postScrapRepository.findByPostAndUser(post, user)
-        if (postScrap == null) {
-            postScrapRepository.save(PostScrap(user = user, post = post))
-        } else {
-            postScrapRepository.delete(postScrap)
+        val post = postRepository.findById(postId).orElseThrow{PostNotFoundException()}
+        if(!postLikeRepository.existsPostLikeByPostAndUser(post,user)){
+            throw PostLikeNotFoundException()
         }
-        return generatePostResponse(post, user)
+        postLikeRepository.deletePostLikeByPostAndUser(post,user)
+        return generatePostResponse(post,user)
     }
+
+
+    @Transactional(readOnly = false)
+    fun scrapPost(authentication: Authentication, boardId:Long, postId: Long): PostResponseDto{
+        val user = userService.authenticationToUser(authentication)
+        val post = postRepository.findById(postId).orElseThrow{PostNotFoundException()}
+        if(postScrapRepository.existsPostLikeByPostAndUser(post,user)){
+            throw AlreadyScrapedPostException()
+        }
+        val postScrap = PostScrap(
+            post = post,
+            user = user
+        )
+        postScrapRepository.save(postScrap)
+        return generatePostResponse(post,user)
+    }
+
+    @Transactional(readOnly = false)
+    fun unScrapPost(authentication: Authentication, boardId:Long, postId: Long): PostResponseDto{
+        val user = userService.authenticationToUser(authentication)
+        val post = postRepository.findById(postId).orElseThrow{PostNotFoundException()}
+        if(!postScrapRepository.existsPostLikeByPostAndUser(post,user)){
+            throw PostScrapNotFoundException()
+        }
+        postScrapRepository.deletePostLikeByPostAndUser(post,user)
+        return generatePostResponse(post,user)
+    }
+
 
     @Transactional(readOnly = true)
     fun getMyPosts(authentication: Authentication): List<PostResponseDto> {
@@ -186,7 +282,6 @@ class PostService(
         return post.map {
             generatePostResponse(it, user)
         }.toList()
-
     }
 
     @Transactional(readOnly = true)
@@ -211,92 +306,87 @@ class PostService(
     fun getCommentedPosts(authentication: Authentication): List<PostResponseDto> {
         val user = userService.authenticationToUser(authentication)
         val post = commentRepository.findCommentsByCreatorUser(user).filter { !it.isDeleted }.map { it.post }
-        return post.map {
+        return post.toSet().map {
+            generatePostResponse(it, user)
+        }.toList()
+    }
+
+    @Transactional(readOnly = true)
+    fun getPopularPosts(authentication: Authentication): List<PostResponseDto> {
+        val user = userService.authenticationToUser(authentication)
+        val posts = postRepository.findBestPosts(Pageable.ofSize(POST_BEST_SIZE))
+        return posts.filter{it.creator !in user.ignoreUsers}.map {
             generatePostResponse(it, user)
         }.toSet().toList()
     }
 
 
     private fun generatePostResponse(post: Post, user: User): PostResponseDto {
-        return PostResponseDto(postId = post.postId!!,
+        return PostResponseDto(
+            boardId = post.board.boardId!!,
+            postId = post.postId!!,
             postTitle = post.title,
             postMessage = post.textContent,
             postImageContents = post.imageContents.map { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
                 .toList(),
-            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey))} ?: post.imageContents.firstOrNull()?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
+            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
+                ?: post.imageContents.firstOrNull()
+                    ?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
+
             postVideoContent = post.videoContent?.let {
                 VideoResponseDto(
-                    videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey), videoDuration = it.duration
+                    videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey),
+                    videoDuration = it.duration
                 )
             },
-            likeCnt = postLikeRepository.countPostLikesByPost(post),
-            scrapCnt = postScrapRepository.countPostScrapsByPost(post),
+            likeCnt = post.likes,
+            scrapCnt = post.scraps,
             isScraped = postScrapRepository.existsPostScrapByPostAndUser(post, user),
             isLiked = postLikeRepository.existsPostLikeByPostAndUser(post, user),
-            commentCnt = commentRepository.countCommentsByPost(post),
+            commentCnt = post.comments,
             createdAt = post.createAt,
             postCreator = UserResponseDto(
-                userId = post.creator.userId,
-                userName = if (post.anonymous) "익명" else post.creator.name,
-                profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey)
+                userId = post.creator?.userId,
+                userName = if (post.anonymous) "익명"  else if (post.creator == null) "알수없음" else post.creator?.name,
+                profileImageUrl = if (post.anonymous || post.creator == null) null else s3Service.getPreSignedGetUrl(post.creator?.profileImageKey?.imageKey)
             ),
             isAnonymous = post.anonymous
         )
     }
 
-    private fun generatePostResponse(post: Post, comments: List<Comment>, user: User): PostResponseDto {
-        return PostResponseDto(postId = post.postId!!,
+     fun generatePostResponse(post: Post, comments: List<Comment>, user: User): PostResponseDto {
+        return PostResponseDto(
+            boardId = post.board.boardId!!,
+            postId = post.postId!!,
             postTitle = post.title,
             postMessage = post.textContent,
             postImageContents = post.imageContents.map { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
                 .toList(),
-            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) } ?: post.imageContents.firstOrNull()?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
+            postThumbnailImage = post.videoThumbnail?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) }
+                ?: post.imageContents.firstOrNull()
+                    ?.let { ImageResponseDto(s3Service.getPreSignedGetUrl(it.imageKey)) },
             postVideoContent = post.videoContent?.let {
                 VideoResponseDto(
-                    videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey), videoDuration = it.duration
+                    videoUrl = s3Service.getPreSignedGetUrl(post.videoContent!!.videoKey),
+                    videoDuration = it.duration
                 )
             },
-            likeCnt = postLikeRepository.countPostLikesByPost(post),
-            scrapCnt = postScrapRepository.countPostScrapsByPost(post),
+            likeCnt = post.likes,
+            scrapCnt = post.scraps,
             isScraped = postScrapRepository.existsPostScrapByPostAndUser(post, user),
             isLiked = postLikeRepository.existsPostLikeByPostAndUser(post, user),
-            commentCnt = commentRepository.countCommentsByPost(post),
+            commentCnt = post.comments,
             createdAt = post.createAt,
             postCreator = UserResponseDto(
-                userId = post.creator.userId,
-                userName = if (post.anonymous) "익명" else post.creator.name,
-                profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey)
+                userId = post.creator?.userId,
+                userName = if (post.anonymous) "익명"  else if (post.creator == null) "알수없음" else post.creator?.name,
+                profileImageUrl = if (post.anonymous || post.creator == null) null else s3Service.getPreSignedGetUrl(post.creator?.profileImageKey?.imageKey)
             ),
             isAnonymous = post.anonymous,
-            comments = comments.filter {
-                it.parentComment == null
+            comments = commentRepository.findCommentsByPost(post).filter {
+                it.commentType == CommentType.COMMENT
             }.map {
-                CommentResponseDto(
-                    commentId = it.commentId,
-                    commentMessage = it.textComment,
-                    commentLike = it.likes,
-                    commentCreator = UserResponseDto(
-                        userId = it.creator.user.userId,
-                        userName = if (it.creator.anonymous) it.creator.anonymousName else it.creator.user.name,
-                        profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey),
-                    ),
-                    createdAt = it.createAt,
-                    childComment = it.replies.map { comment ->
-                        CommentResponseDto(
-                            commentId = comment.commentId,
-                            commentMessage = comment.textComment,
-                            commentLike = comment.likes,
-                            commentCreator = UserResponseDto(
-                                userId = comment.creator.user.userId,
-                                userName = if (comment.creator.anonymous) comment.creator.anonymousName else comment.creator.user.name,
-                                profileImageUrl = if (post.anonymous) null else s3Service.getPreSignedGetUrl(post.creator.profileImageKey.imageKey),
-                            ),
-                            createdAt = comment.createAt,
-                            isAnonymous = comment.creator.anonymous
-                        )
-                    }.toMutableList(),
-                    isAnonymous = it.creator.anonymous
-                )
+                comment -> commentService.generateCommentResponse(comment,user)
             }
         )
     }

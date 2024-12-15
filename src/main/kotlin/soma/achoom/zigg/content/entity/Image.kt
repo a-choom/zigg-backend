@@ -3,6 +3,7 @@ package soma.achoom.zigg.content.entity
 import jakarta.persistence.*
 import org.jetbrains.annotations.TestOnly
 import soma.achoom.zigg.global.BaseEntity
+import soma.achoom.zigg.global.util.S3UrlParser
 import soma.achoom.zigg.user.entity.User
 
 @Entity(name = "image")
@@ -28,10 +29,10 @@ class Image private constructor(
 
     companion object{
         fun fromUrl(imageUrl: String, uploader: User): Image {
-            val imageKey = imageUrl.split("?")[0]
-                .split("/")
-                .subList(3, imageUrl.split("?")[0].split("/").size)
-                .joinToString("/")
+            val imageKey = S3UrlParser.extractionKeyFromUrl(imageUrl)
+            return Image(uploader = uploader, imageKey = imageKey)
+        }
+        fun fromKey(imageKey: String,uploader: User) : Image{
             return Image(uploader = uploader, imageKey = imageKey)
         }
     }

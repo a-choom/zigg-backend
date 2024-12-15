@@ -6,6 +6,7 @@ import soma.achoom.zigg.content.entity.Image
 import soma.achoom.zigg.content.entity.Video
 import soma.achoom.zigg.global.BaseEntity
 import soma.achoom.zigg.feedback.entity.Feedback
+import soma.achoom.zigg.space.entity.Space
 import java.util.UUID
 
 @Entity(name = "history")

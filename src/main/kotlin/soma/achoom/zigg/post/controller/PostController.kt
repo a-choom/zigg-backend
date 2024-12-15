@@ -7,7 +7,7 @@ import soma.achoom.zigg.history.dto.UploadContentTypeRequestDto
 import soma.achoom.zigg.post.dto.PostRequestDto
 import soma.achoom.zigg.post.dto.PostResponseDto
 import soma.achoom.zigg.post.service.PostService
-import soma.achoom.zigg.s3.service.S3DataType
+import soma.achoom.zigg.s3.entity.S3DataType
 import soma.achoom.zigg.s3.service.S3Service
 import java.util.*
 
@@ -35,6 +35,11 @@ class PostController(
         }
         else return ResponseEntity.badRequest().build()
     }
+    @GetMapping("/random/{boardId}")
+    fun getRandomPostsIncludeInBoard(authentication: Authentication, @PathVariable boardId: Long) : ResponseEntity<List<PostResponseDto>>{
+        return ResponseEntity.ok(postService.getRandomPostsFromBoard(authentication,boardId))
+    }
+
     @GetMapping("/{boardId}")
     fun getPosts(authentication: Authentication, @PathVariable boardId:Long,  @RequestParam("page") page: Int) : ResponseEntity<List<PostResponseDto>>{
         val posts = postService.getPosts(authentication, boardId, page)
@@ -72,12 +77,22 @@ class PostController(
     }
     @GetMapping("/likes/{boardId}/{postId}")
     fun likePost(authentication: Authentication, @PathVariable boardId : Long,@PathVariable postId: Long) : ResponseEntity<PostResponseDto>{
-        val post = postService.likeOrUnlikePost(authentication, postId)
+        val post = postService.likePost(authentication,boardId, postId)
+        return ResponseEntity.ok(post)
+    }
+    @DeleteMapping("/likes/{boardId}/{postId}")
+    fun unlikePost(authentication: Authentication, @PathVariable boardId : Long,@PathVariable postId: Long) : ResponseEntity<PostResponseDto>{
+        val post = postService.unlikePost(authentication,boardId, postId)
         return ResponseEntity.ok(post)
     }
     @GetMapping("/scraps/{boardId}/{postId}")
     fun scrapPost(authentication: Authentication, @PathVariable boardId: Long, @PathVariable postId: Long) : ResponseEntity<PostResponseDto>{
-        val posts = postService.scrapOrUnscrapPost(authentication, postId)
+        val posts = postService.scrapPost(authentication,boardId, postId)
+        return ResponseEntity.ok(posts)
+    }
+    @DeleteMapping("/scraps/{boardId}/{postId}")
+    fun unScrapPost(authentication: Authentication, @PathVariable boardId: Long, @PathVariable postId: Long) : ResponseEntity<PostResponseDto>{
+        val posts = postService.unScrapPost(authentication,boardId, postId)
         return ResponseEntity.ok(posts)
     }
     @GetMapping("/scraps")
@@ -93,6 +108,11 @@ class PostController(
     @GetMapping("/commented")
     fun getMyCommentedPosts(authentication: Authentication) : ResponseEntity<List<PostResponseDto>>{
         val posts = postService.getCommentedPosts(authentication)
+        return ResponseEntity.ok(posts)
+    }
+    @GetMapping("/hottest")
+    fun getHottestPosts(authentication: Authentication) : ResponseEntity<List<PostResponseDto>>{
+        val posts = postService.getPopularPosts(authentication)
         return ResponseEntity.ok(posts)
     }
 }

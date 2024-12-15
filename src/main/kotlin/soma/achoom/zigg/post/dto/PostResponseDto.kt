@@ -9,6 +9,7 @@ import java.time.LocalDateTime
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class PostResponseDto(
+    val boardId: Long,
     val postId: Long,
     val postTitle: String,
     val postCreator: UserResponseDto,
@@ -18,9 +19,9 @@ data class PostResponseDto(
     val postThumbnailImage: ImageResponseDto? = null,
     val comments : List<CommentResponseDto>? = null,
     val isAnonymous: Boolean,
-    val likeCnt: Long,
-    val commentCnt: Long,
-    val scrapCnt: Long,
+    val likeCnt: Int,
+    val commentCnt: Int,
+    val scrapCnt: Int,
     val isScraped: Boolean,
     val isLiked: Boolean,
     val createdAt: LocalDateTime,

@@ -4,7 +4,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.security.core.Authentication
 import org.springframework.web.bind.annotation.*
 import soma.achoom.zigg.history.dto.UploadContentTypeRequestDto
-import soma.achoom.zigg.s3.service.S3DataType
+import soma.achoom.zigg.s3.entity.S3DataType
 import soma.achoom.zigg.s3.service.S3Service
 import soma.achoom.zigg.invite.dto.InviteRequestDto
 import soma.achoom.zigg.space.dto.SpaceReferenceUrlRequestDto
@@ -19,6 +19,17 @@ class SpaceController(
     private val spaceService: SpaceService,
     private val s3Service: S3Service,
 ) {
+    @GetMapping("/recent")
+    fun getRecentSpaces(authentication: Authentication, @RequestParam("page") page:Int) : ResponseEntity<List<SpaceResponseDto>>{
+        return ResponseEntity.ok(spaceService.getRecentSpaceInfos(authentication,page))
+    }
+
+    @GetMapping("/deferred/{spaceId}")
+    fun enterSpaceWithDeferredAppLink(authentication: Authentication,@PathVariable spaceId: Long) :ResponseEntity<Void> {
+        spaceService.enterSpaceByDeferredAppLink(authentication,spaceId)
+        return ResponseEntity.noContent().build()
+    }
+
     @PostMapping("/pre-signed-url")
     fun getPreSignUrl(@RequestBody uploadContentTypeRequestDto: UploadContentTypeRequestDto) : ResponseEntity<String> {
         val preSignUrl = s3Service.getPreSignedPutUrl(S3DataType.SPACE_IMAGE,UUID.randomUUID(),uploadContentTypeRequestDto)

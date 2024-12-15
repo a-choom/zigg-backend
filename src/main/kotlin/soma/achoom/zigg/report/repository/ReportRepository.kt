@@ -1,4 +1,8 @@
 package soma.achoom.zigg.report.repository
 
-interface ReportRepository {
+import org.springframework.data.jpa.repository.JpaRepository
+import soma.achoom.zigg.report.entity.Report
+
+interface ReportRepository : JpaRepository<Report, Long>{
+
 }

@@ -10,4 +10,6 @@ interface InviteRepository : JpaRepository<Invite,Long>{
     fun findInvitesBySpace(space: Space):List<Invite>
     fun findInvitesByInviter(user: User):List<Invite>
     fun findInvitesByInvitee(user: User):List<Invite>
+    fun deleteInvitesByInviter(inviter:User)
+    fun deleteInvitesByInvitee(invitee:User)
 }

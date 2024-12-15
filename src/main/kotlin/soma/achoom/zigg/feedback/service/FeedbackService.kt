@@ -46,8 +46,8 @@ class FeedbackService @Autowired constructor(
                 feedbackMessage = it.message,
                 creatorId = SpaceUserResponseDto(
                     userId = it.creator.user?.userId,
-                    userName = it.creator.user?.name ?: "알 수 없음",
-                    userNickname = it.creator.user?.nickname ?: "알 수 없음",
+                    userName = it.creator.user?.name ?: "알수없음",
+                    userNickname = it.creator.user?.nickname ?: "알수없음",
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.creator.user?.profileImageKey?.imageKey),
                     spaceUserId = it.creator.spaceUserId,
                     spaceRole = it.creator.role,
@@ -55,8 +55,8 @@ class FeedbackService @Autowired constructor(
                 recipientId = it.recipients.map { spaceUser ->
                     SpaceUserResponseDto(
                         userId = spaceUser.user?.userId,
-                        userName = spaceUser.user?.name ?: "알 수 없음",
-                        userNickname = spaceUser.user?.nickname ?:  "알 수 없음",
+                        userName = spaceUser.user?.name ?: "알수없음",
+                        userNickname = spaceUser.user?.nickname ?: "알수없음",
                         profileImageUrl = s3Service.getPreSignedGetUrl(spaceUser.user?.profileImageKey?.imageKey),
                         spaceUserId = spaceUser.spaceUserId,
                         spaceRole = spaceUser.role,
@@ -101,8 +101,8 @@ class FeedbackService @Autowired constructor(
             feedbackMessage = feedback.message,
             creatorId = SpaceUserResponseDto(
                 userId = feedback.creator.user?.userId,
-                userName = feedback.creator.user?.name ?: "알 수 없음",
-                userNickname = feedback.creator.user?.nickname ?: "알 수 없음",
+                userName = feedback.creator.user?.name ?: "알수없음",
+                userNickname = feedback.creator.user?.nickname ?: "알수없음",
                 profileImageUrl = s3Service.getPreSignedGetUrl(feedback.creator.user?.profileImageKey?.imageKey),
                 spaceUserId = feedback.creator.spaceUserId,
                 spaceRole = feedback.creator.role,
@@ -110,8 +110,8 @@ class FeedbackService @Autowired constructor(
             recipientId = feedback.recipients.map {
                 SpaceUserResponseDto(
                     userId = it.user?.userId,
-                    userName = it.user?.name ?: "알 수 없음",
-                    userNickname = it.user?.nickname ?: "알 수 없음",
+                    userName = it.user?.name ?: "알수없음",
+                    userNickname = it.user?.nickname ?: "알수없음",
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
@@ -153,8 +153,8 @@ class FeedbackService @Autowired constructor(
             feedbackMessage = feedback.message,
             creatorId = SpaceUserResponseDto(
                 userId = feedback.creator.user?.userId,
-                userName = feedback.creator.user?.name ?: "알 수 없음",
-                userNickname = feedback.creator.user?.nickname ?: "알 수 없음",
+                userName = feedback.creator.user?.name ?: "알수없음",
+                userNickname = feedback.creator.user?.nickname ?: "알수없음",
                 profileImageUrl = s3Service.getPreSignedGetUrl(feedback.creator.user?.profileImageKey?.imageKey),
                 spaceUserId = feedback.creator.spaceUserId,
                 spaceRole = feedback.creator.role,
@@ -162,8 +162,8 @@ class FeedbackService @Autowired constructor(
             recipientId = feedback.recipients.map {
                 SpaceUserResponseDto(
                     userId = it.user?.userId,
-                    userName = it.user?.name ?: "알 수 없음",
-                    userNickname = it.user?.nickname ?: "알 수 없음",
+                    userName = it.user?.name ?: "알수없음",
+                    userNickname = it.user?.nickname ?: "알수없음",
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,
@@ -210,8 +210,8 @@ class FeedbackService @Autowired constructor(
             feedbackMessage = feedback.message,
             creatorId = SpaceUserResponseDto(
                 userId = feedback.creator.user?.userId,
-                userName = feedback.creator.user?.name ?: "알 수 없음",
-                userNickname = feedback.creator.user?.nickname ?: "알 수 없음",
+                userName = feedback.creator.user?.name ?: "알수없음",
+                userNickname = feedback.creator.user?.nickname ?: "알수없음",
                 profileImageUrl = s3Service.getPreSignedGetUrl(feedback.creator.user?.profileImageKey?.imageKey),
                 spaceUserId = feedback.creator.spaceUserId,
                 spaceRole = feedback.creator.role,
@@ -219,8 +219,8 @@ class FeedbackService @Autowired constructor(
             recipientId = feedback.recipients.map {
                 SpaceUserResponseDto(
                     userId = it.user?.userId,
-                    userName = it.user?.name ?: "알 수 없음",
-                    userNickname = it.user?.nickname ?: "알 수 없음",
+                    userName = it.user?.name ?: "알수없음",
+                    userNickname = it.user?.nickname ?: "알수없음",
                     profileImageUrl = s3Service.getPreSignedGetUrl(it.user?.profileImageKey?.imageKey),
                     spaceUserId = it.spaceUserId,
                     spaceRole = it.role,

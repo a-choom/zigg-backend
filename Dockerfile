@@ -3,7 +3,7 @@ WORKDIR /app
 COPY gradle gradle
 COPY gradlew .
 COPY build.gradle.kts settings.gradle.kts ./
-RUN ./gradlew build --parallel --no-daemon -x test || return 0
+RUN ./gradlew dependencies --no-daemon
 COPY . .
 RUN ./gradlew build --parallel --no-daemon -x test
 
